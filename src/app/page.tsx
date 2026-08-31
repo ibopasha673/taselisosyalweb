@@ -38,9 +38,16 @@ export default function HomePage() {
   const [kategoriler, setKategoriler] = useState<KategoriItem[]>([])
   const [urunler, setUrunler] = useState<UrunItem[]>([])
   const [currentSlide, setCurrentSlide] = useState(0)
+  // null => "Tümü" seçili, aksi halde seçili kategorinin id'si
+  const [selectedKategoriId, setSelectedKategoriId] = useState<string | null>(null)
 
   // Admin panelinden "Öne Çıkar" işaretlenen ürünler
   const featuredItems = urunler.filter((u) => u.one_cikanlar)
+
+  // Pill filtreye göre gösterilecek ürünler ("Tümü" seçiliyken hepsi)
+  const filtrelenmisUrunler = selectedKategoriId
+    ? urunler.filter((u) => u.kategori_uuid === selectedKategoriId)
+    : urunler
 
   useEffect(() => {
     async function fetchData() {
@@ -127,7 +134,12 @@ export default function HomePage() {
                   <div className="px-4 py-3 text-stone-500 text-xs">Henüz kategori eklenmedi.</div>
                 ) : (
                   kategoriler.map((kat) => (
-                    <Link key={kat.id} href={`#kategori-${kat.id}`} className="flex items-center justify-between px-4 py-3 text-stone-700 hover:bg-amber-50 hover:text-amber-900 transition-colors">
+                    <Link
+                      key={kat.id}
+                      href="#urun-listesi"
+                      onClick={() => setSelectedKategoriId(kat.id)}
+                      className="flex items-center justify-between px-4 py-3 text-stone-700 hover:bg-amber-50 hover:text-amber-900 transition-colors"
+                    >
                       <span className="font-medium">{kat.kategori_ismi}</span>
                       <ChevronRight className="w-4 h-4 text-stone-400" />
                     </Link>
@@ -217,42 +229,62 @@ export default function HomePage() {
           </section>
         )}
 
-        {/* Kategorilere Göre Ürün Listeleme Alanı */}
-        <section className="max-w-7xl mx-auto px-4 pb-16 space-y-12">
-          {kategoriler.map((kat) => {
-            const katUrunleri = urunler.filter(u => u.kategori_uuid === kat.id)
-            if (katUrunleri.length === 0) return null
+        {/* Ürün Listeleme Alanı: Üstte Kategori Filtresi, Altında Ürünler */}
+        <section id="urun-listesi" className="max-w-7xl mx-auto px-4 pb-16">
+          {/* Kategori Filtre Pilleri */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 mb-8">
+            <button
+              type="button"
+              onClick={() => setSelectedKategoriId(null)}
+              className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors border ${
+                selectedKategoriId === null
+                  ? 'bg-amber-800 text-white border-amber-800'
+                  : 'bg-white text-stone-700 border-stone-300 hover:border-amber-600'
+              }`}
+            >
+              Tümü
+            </button>
+            {kategoriler.map((kat) => (
+              <button
+                key={kat.id}
+                type="button"
+                onClick={() => setSelectedKategoriId(kat.id)}
+                className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors border ${
+                  selectedKategoriId === kat.id
+                    ? 'bg-amber-800 text-white border-amber-800'
+                    : 'bg-white text-stone-700 border-stone-300 hover:border-amber-600'
+                }`}
+              >
+                {kat.kategori_ismi}
+              </button>
+            ))}
+          </div>
 
-            return (
-              <div key={kat.id} id={`kategori-${kat.id}`}>
-                <div className="flex items-center gap-2 mb-6 border-b border-stone-200 pb-3">
-                  <div className="w-3 h-3 rounded-full bg-amber-800"></div>
-                  <h2 className="text-xl font-bold text-stone-800">{kat.kategori_ismi}</h2>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {katUrunleri.map((urun) => (
-                    <div key={urun.id} className="bg-white rounded-xl overflow-hidden border border-stone-200 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
-                      {urun.urun_gorseli1 && (
-                        <div className="relative h-48 w-full bg-stone-100">
-                          <Image src={urun.urun_gorseli1} alt={urun.urun_ismi} fill className="object-cover" />
-                        </div>
-                      )}
-                      <div className="p-4 flex-grow">
-                        <div className="flex justify-between items-start mb-1 gap-2">
-                          <h3 className="font-bold text-base text-stone-800">{urun.urun_ismi}</h3>
-                          {urun.fiyat != null && (
-                            <span className="font-bold text-amber-800 whitespace-nowrap">{urun.fiyat} ₺</span>
-                          )}
-                        </div>
-                        <p className="text-xs text-stone-500">{urun.urun_aciklamasi}</p>
-                      </div>
+          {/* Filtrelenmiş Ürün Kartları */}
+          {filtrelenmisUrunler.length === 0 ? (
+            <p className="text-sm text-stone-500 text-center py-12">Bu kategoride henüz ürün bulunmuyor.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {filtrelenmisUrunler.map((urun) => (
+                <div key={urun.id} className="bg-white rounded-xl overflow-hidden border border-stone-200 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+                  {urun.urun_gorseli1 && (
+                    <div className="relative h-48 w-full bg-stone-100">
+                      <Image src={urun.urun_gorseli1} alt={urun.urun_ismi} fill className="object-cover" />
                     </div>
-                  ))}
+                  )}
+                  <div className="p-4 flex-grow">
+                    <div className="flex justify-between items-start mb-1 gap-2">
+                      <h3 className="font-bold text-base text-stone-800">{urun.urun_ismi}</h3>
+                      {urun.fiyat != null && (
+                        <span className="font-bold text-amber-800 whitespace-nowrap">{urun.fiyat} ₺</span>
+                      )}
+                    </div>
+                    <p className="text-xs text-stone-500">{urun.urun_aciklamasi}</p>
+                  </div>
                 </div>
-              </div>
-            )
-          })}
+              ))}
+            </div>
+          )}
         </section>
       </div>
 
