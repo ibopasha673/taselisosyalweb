@@ -45,7 +45,7 @@ export default function HakkimizdaPage() {
               <Link href="/hakkimizda" className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-700/40 text-amber-100 transition-colors">
                 <Info className="w-4 h-4 text-amber-400" /> HAKKIMIZDA
               </Link>
-              <Link href="#" className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-amber-900/40 text-stone-300 hover:text-amber-100 transition-colors">
+              <Link href="/#iletisim" className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-amber-900/40 text-stone-300 hover:text-amber-100 transition-colors">
                 <Phone className="w-4 h-4 text-amber-500" /> İLETİŞİM
               </Link>
             </div>
