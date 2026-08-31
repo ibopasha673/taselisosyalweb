@@ -169,7 +169,7 @@ export default function HomePage() {
             </div>
 
             {/* Sağ Kısım: 7 Saniyede Bir Kayan Slider */}
-            <div className="lg:col-span-3 relative h-[260px] md:h-[310px] rounded-2xl overflow-hidden shadow-md bg-[#2c1810] flex items-center">
+            <div className="lg:col-span-3 relative h-[260px] md:h-[310px] lg:h-[380px] xl:h-[440px] rounded-2xl overflow-hidden shadow-md bg-[#2c1810] flex items-center">
               {sliders.length === 0 ? (
                 <div className="absolute inset-0 flex items-center justify-center text-stone-400 text-sm">
                   Henüz slider eklenmedi.
@@ -181,11 +181,12 @@ export default function HomePage() {
                     className={`absolute inset-0 transition-opacity duration-1000 flex items-center p-8 ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
                   >
                     <div className="absolute inset-0 z-0">
-                      <Image 
-                        src={slider.gorsel_url} 
-                        alt="Slider Görseli" 
-                        fill 
-                        className="object-cover filter brightness-[0.4]"
+                      <Image
+                        src={slider.gorsel_url}
+                        alt="Slider Görseli"
+                        fill
+                        sizes="(min-width: 1280px) 1200px, (min-width: 1024px) 900px, 100vw"
+                        className="object-cover object-center filter brightness-[0.4] lg:brightness-[0.5]"
                       />
                     </div>
                     <div className="relative z-10 max-w-xl text-white">
