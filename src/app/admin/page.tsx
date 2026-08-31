@@ -14,6 +14,7 @@ type SliderItem = {
   gorsel_url: string
   slogan_durum: boolean
   baslik_durum: boolean
+  ustten_kirp: boolean
 }
 
 type KategoriItem = {
@@ -49,6 +50,8 @@ export default function AdminDashboard() {
   const [slogan, setSlogan] = useState('')
   const [baslikDurum, setBaslikDurum] = useState(true)
   const [sloganDurum, setSloganDurum] = useState(true)
+  // true => görsel üstten kırpılır (object-top), false => alttan kırpılır (object-bottom)
+  const [usttenKirp, setUsttenKirp] = useState(true)
   const [file, setFile] = useState<File | null>(null)
   const [currentImageUrl, setCurrentImageUrl] = useState('')
 
@@ -167,7 +170,8 @@ export default function AdminDashboard() {
         slogan,
         gorsel_url,
         baslik_durum: baslikDurum,
-        slogan_durum: sloganDurum
+        slogan_durum: sloganDurum,
+        ustten_kirp: usttenKirp
       }).eq('id', editingId)
     } else {
       await supabase.from('sliders').insert([{
@@ -175,7 +179,8 @@ export default function AdminDashboard() {
         slogan,
         gorsel_url,
         baslik_durum: baslikDurum,
-        slogan_durum: sloganDurum
+        slogan_durum: sloganDurum,
+        ustten_kirp: usttenKirp
       }])
     }
 
@@ -183,6 +188,7 @@ export default function AdminDashboard() {
     setSlogan('')
     setBaslikDurum(true)
     setSloganDurum(true)
+    setUsttenKirp(true)
     setFile(null)
     setCurrentImageUrl('')
     setEditingId(null)
@@ -304,6 +310,7 @@ export default function AdminDashboard() {
     setSlogan(slider.slogan || '')
     setBaslikDurum(slider.baslik_durum)
     setSloganDurum(slider.slogan_durum)
+    setUsttenKirp(slider.ustten_kirp ?? true)
     setCurrentImageUrl(slider.gorsel_url)
     setFile(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -493,6 +500,42 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300 mb-1.5">GÖRSEL KIRPMA YÖNÜ</label>
+                  <div className="flex gap-2 mb-2">
+                    <button
+                      type="button"
+                      onClick={() => setUsttenKirp(true)}
+                      className={`flex-1 py-2.5 rounded-xl text-xs font-bold tracking-wide border transition-all ${
+                        usttenKirp
+                          ? 'bg-amber-700 border-amber-600 text-white'
+                          : 'bg-[#1e100a] border-amber-900/50 text-stone-300 hover:border-amber-700'
+                      }`}
+                    >
+                      ÜSTTEN KIRP
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setUsttenKirp(false)}
+                      className={`flex-1 py-2.5 rounded-xl text-xs font-bold tracking-wide border transition-all ${
+                        !usttenKirp
+                          ? 'bg-amber-700 border-amber-600 text-white'
+                          : 'bg-[#1e100a] border-amber-900/50 text-stone-300 hover:border-amber-700'
+                      }`}
+                    >
+                      ALTTAN KIRP
+                    </button>
+                  </div>
+                  <div className="flex items-start gap-2 bg-amber-950/40 border border-amber-900/40 rounded-lg px-3 py-2">
+                    <span className="text-amber-500 text-sm leading-none mt-0.5">ⓘ</span>
+                    <p className="text-[11px] text-stone-300 leading-relaxed">
+                      Görsel bu alana tam oturmayabilir; bu yüzden bir kenarından otomatik kırpılır. Görselin asıl anlatmak
+                      istediği kısım (yemek, ürün, insan vb.) üstte mi kalıyor altta mı, ona bakıp o tarafı koruyan
+                      seçeneği işaretleyin — gerekirse görselin diğer ucundan biraz feda edin.
+                    </p>
+                  </div>
+                </div>
+
+                <div>
                   <div className="flex justify-between items-center mb-1">
                     <label className="text-xs font-semibold uppercase tracking-wider text-stone-300">SLOGAN</label>
                     <label className="flex items-center gap-1.5 text-[11px] font-medium text-stone-300 cursor-pointer">
@@ -525,7 +568,7 @@ export default function AdminDashboard() {
                   {editingId && (
                     <button 
                       type="button"
-                      onClick={() => { setEditingId(null); setBaslik(''); setSlogan(''); setFile(null); setCurrentImageUrl(''); }}
+                      onClick={() => { setEditingId(null); setBaslik(''); setSlogan(''); setUsttenKirp(true); setFile(null); setCurrentImageUrl(''); }}
                       className="bg-stone-700 hover:bg-stone-600 text-stone-200 px-4 py-3 rounded-xl text-xs font-bold"
                     >
                       İPTAL
@@ -555,6 +598,9 @@ export default function AdminDashboard() {
                       <div className="flex-grow min-w-0">
                         <h4 className="font-bold text-amber-100 text-sm truncate">{slider.baslik || '(Başlık Yok)'}</h4>
                         <p className="text-xs text-stone-400 truncate mt-0.5">{slider.slogan || '(Slogan Yok)'}</p>
+                        <span className="inline-block mt-1.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400 bg-amber-950/50 border border-amber-900/50 rounded-full px-2 py-0.5">
+                          {(slider.ustten_kirp ?? true) ? 'Üstten Kırpılıyor' : 'Alttan Kırpılıyor'}
+                        </span>
                       </div>
 
                       <div className="flex items-center gap-2 flex-shrink-0">

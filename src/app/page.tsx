@@ -33,6 +33,7 @@ type SliderItem = {
   gorsel_url: string
   slogan_durum: boolean
   baslik_durum: boolean
+  ustten_kirp: boolean
 }
 
 type KategoriItem = {
@@ -277,7 +278,7 @@ export default function HomePage() {
                         alt="Slider Görseli"
                         fill
                         sizes="(min-width: 1280px) 1200px, (min-width: 1024px) 900px, 100vw"
-                        className="object-cover object-bottom"
+                        className={`object-cover ${(slider.ustten_kirp ?? true) ? 'object-top' : 'object-bottom'}`}
                       />
                       <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/15 to-transparent" />
                     </div>
