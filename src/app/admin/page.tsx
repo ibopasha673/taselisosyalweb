@@ -14,7 +14,7 @@ type SliderItem = {
   gorsel_url: string
   slogan_durum: boolean
   baslik_durum: boolean
-  ustten_kirp: boolean
+  ustten_kirp: boolean | null
 }
 
 type KategoriItem = {
@@ -50,8 +50,8 @@ export default function AdminDashboard() {
   const [slogan, setSlogan] = useState('')
   const [baslikDurum, setBaslikDurum] = useState(true)
   const [sloganDurum, setSloganDurum] = useState(true)
-  // true => görsel üstten kırpılır (object-top), false => alttan kırpılır (object-bottom)
-  const [usttenKirp, setUsttenKirp] = useState(true)
+  // true => görsel üstten kırpılır (object-top), false => alttan kırpılır (object-bottom), null => ortalı kırpılır (object-center)
+  const [usttenKirp, setUsttenKirp] = useState<boolean | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [currentImageUrl, setCurrentImageUrl] = useState('')
 
@@ -188,7 +188,7 @@ export default function AdminDashboard() {
     setSlogan('')
     setBaslikDurum(true)
     setSloganDurum(true)
-    setUsttenKirp(true)
+    setUsttenKirp(null)
     setFile(null)
     setCurrentImageUrl('')
     setEditingId(null)
@@ -310,7 +310,7 @@ export default function AdminDashboard() {
     setSlogan(slider.slogan || '')
     setBaslikDurum(slider.baslik_durum)
     setSloganDurum(slider.slogan_durum)
-    setUsttenKirp(slider.ustten_kirp ?? true)
+    setUsttenKirp(slider.ustten_kirp ?? null)
     setCurrentImageUrl(slider.gorsel_url)
     setFile(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -527,7 +527,7 @@ export default function AdminDashboard() {
                       type="button"
                       onClick={() => setUsttenKirp(true)}
                       className={`flex-1 py-2.5 rounded-xl text-xs font-bold tracking-wide border transition-all ${
-                        usttenKirp
+                        usttenKirp === true
                           ? 'bg-amber-700 border-amber-600 text-white'
                           : 'bg-[#1e100a] border-amber-900/50 text-stone-300 hover:border-amber-700'
                       }`}
@@ -536,9 +536,20 @@ export default function AdminDashboard() {
                     </button>
                     <button
                       type="button"
+                      onClick={() => setUsttenKirp(null)}
+                      className={`flex-1 py-2.5 rounded-xl text-xs font-bold tracking-wide border transition-all ${
+                        usttenKirp === null
+                          ? 'bg-amber-700 border-amber-600 text-white'
+                          : 'bg-[#1e100a] border-amber-900/50 text-stone-300 hover:border-amber-700'
+                      }`}
+                    >
+                      ORTALI KIRP
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setUsttenKirp(false)}
                       className={`flex-1 py-2.5 rounded-xl text-xs font-bold tracking-wide border transition-all ${
-                        !usttenKirp
+                        usttenKirp === false
                           ? 'bg-amber-700 border-amber-600 text-white'
                           : 'bg-[#1e100a] border-amber-900/50 text-stone-300 hover:border-amber-700'
                       }`}
@@ -551,7 +562,8 @@ export default function AdminDashboard() {
                     <p className="text-[11px] text-stone-300 leading-relaxed">
                       Görsel bu alana tam oturmayabilir; bu yüzden bir kenarından otomatik kırpılır. Görselin asıl anlatmak
                       istediği kısım (yemek, ürün, insan vb.) üstte mi kalıyor altta mı, ona bakıp o tarafı koruyan
-                      seçeneği işaretleyin — gerekirse görselin diğer ucundan biraz feda edin.
+                      seçeneği işaretleyin. Emin değilseniz &quot;Ortalı Kırp&quot;ı seçin — bu, görselin hem üstünden hem
+                      altından eşit miktarda kırpar, en güvenli varsayılan seçenektir.
                     </p>
                   </div>
                 </div>
@@ -589,7 +601,7 @@ export default function AdminDashboard() {
                   {editingId && (
                     <button 
                       type="button"
-                      onClick={() => { setEditingId(null); setBaslik(''); setSlogan(''); setUsttenKirp(true); setFile(null); setCurrentImageUrl(''); }}
+                      onClick={() => { setEditingId(null); setBaslik(''); setSlogan(''); setUsttenKirp(null); setFile(null); setCurrentImageUrl(''); }}
                       className="bg-stone-700 hover:bg-stone-600 text-stone-200 px-4 py-3 rounded-xl text-xs font-bold"
                     >
                       İPTAL
@@ -620,7 +632,11 @@ export default function AdminDashboard() {
                         <h4 className="font-bold text-amber-100 text-sm truncate">{slider.baslik || '(Başlık Yok)'}</h4>
                         <p className="text-xs text-stone-400 truncate mt-0.5">{slider.slogan || '(Slogan Yok)'}</p>
                         <span className="inline-block mt-1.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400 bg-amber-950/50 border border-amber-900/50 rounded-full px-2 py-0.5">
-                          {(slider.ustten_kirp ?? true) ? 'Üstten Kırpılıyor' : 'Alttan Kırpılıyor'}
+                          {slider.ustten_kirp === true
+                            ? 'Üstten Kırpılıyor'
+                            : slider.ustten_kirp === false
+                            ? 'Alttan Kırpılıyor'
+                            : 'Ortalı Kırpılıyor'}
                         </span>
                       </div>
 
