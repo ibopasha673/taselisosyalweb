@@ -140,7 +140,7 @@ export default function AdminDashboard() {
       if (editingId && currentImageUrl) {
         const oldPath = currentImageUrl.split('/sliders/')[1]
         if (oldPath) {
-          await supabase.storage.from('sliders').remove([oldPath])
+          await supabase.storage.from('sliders').remove([decodeURIComponent(oldPath)])
         }
       }
 
@@ -245,7 +245,7 @@ export default function AdminDashboard() {
     if (file1) {
       if (editingUrunId && currentGorsel1) {
         const oldPath = currentGorsel1.split('/urunler/')[1]
-        if (oldPath) await supabase.storage.from('urunler').remove([oldPath])
+        if (oldPath) await supabase.storage.from('urunler').remove([decodeURIComponent(oldPath)])
       }
       const fn = `${Date.now()}-1-${slugifyFilename(file1.name)}`
       const { error: err1 } = await supabase.storage.from('urunler').upload(fn, file1)
@@ -256,7 +256,7 @@ export default function AdminDashboard() {
     if (file2) {
       if (editingUrunId && currentGorsel2) {
         const oldPath = currentGorsel2.split('/urunler/')[1]
-        if (oldPath) await supabase.storage.from('urunler').remove([oldPath])
+        if (oldPath) await supabase.storage.from('urunler').remove([decodeURIComponent(oldPath)])
       }
       const fn2 = `${Date.now()}-2-${slugifyFilename(file2.name)}`
       const { error: err2 } = await supabase.storage.from('urunler').upload(fn2, file2)
@@ -341,7 +341,10 @@ export default function AdminDashboard() {
     if (!confirm('Bu manşeti silmek istediğinize emin misiniz?')) return
     const path = gorsel_url.split('/sliders/')[1]
     if (path) {
-      await supabase.storage.from('sliders').remove([path])
+      const { error: storageError } = await supabase.storage.from('sliders').remove([decodeURIComponent(path)])
+      if (storageError) {
+        alert('Görsel storage\'dan silinemedi: ' + storageError.message + '\nKayıt yine de tablodan silinecek.')
+      }
     }
     await supabase.from('sliders').delete().eq('id', id)
     fetchSliders()
@@ -355,13 +358,23 @@ export default function AdminDashboard() {
 
   const handleDeleteUrun = async (id: string, g1: string, g2: string) => {
     if (!confirm('Bu ürünü silmek istediğinize emin misiniz?')) return
+    const storageHatalari: string[] = []
     if (g1) {
       const p1 = g1.split('/urunler/')[1]
-      if (p1) await supabase.storage.from('urunler').remove([p1])
+      if (p1) {
+        const { error } = await supabase.storage.from('urunler').remove([decodeURIComponent(p1)])
+        if (error) storageHatalari.push(error.message)
+      }
     }
     if (g2) {
       const p2 = g2.split('/urunler/')[1]
-      if (p2) await supabase.storage.from('urunler').remove([p2])
+      if (p2) {
+        const { error } = await supabase.storage.from('urunler').remove([decodeURIComponent(p2)])
+        if (error) storageHatalari.push(error.message)
+      }
+    }
+    if (storageHatalari.length > 0) {
+      alert('Görsel(ler) storage\'dan silinemedi: ' + storageHatalari.join(', ') + '\nKayıt yine de tablodan silinecek.')
     }
     await supabase.from('urunler').delete().eq('id', id)
     fetchUrunler()
@@ -486,16 +499,24 @@ export default function AdminDashboard() {
 
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300 mb-1">GÖRSEL</label>
+                  {currentImageUrl && !file && (
+                    <div className="flex items-center gap-3 mb-2 bg-[#1e100a] border border-amber-900/50 rounded-xl p-2">
+                      <div className="relative w-20 h-14 rounded-lg overflow-hidden bg-stone-900 flex-shrink-0 border border-amber-900/50">
+                        <Image src={currentImageUrl} alt="Mevcut görsel" fill className="object-cover" />
+                      </div>
+                      <p className="text-[11px] text-amber-400">Mevcut görsel korunuyor. Değiştirmek için yeni bir dosya seçin.</p>
+                    </div>
+                  )}
                   <div className="flex items-center gap-3 bg-[#1e100a] border border-amber-900/50 rounded-xl px-4 py-2.5">
-                    <input 
-                      type="file" 
+                    <input
+                      type="file"
                       accept="image/*"
                       onChange={(e) => e.target.files && setFile(e.target.files[0])}
                       className="text-xs text-stone-400 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-700 file:text-white hover:file:bg-amber-600 cursor-pointer"
                     />
                   </div>
-                  {currentImageUrl && !file && (
-                    <p className="text-[11px] text-amber-400 mt-1">Mevcut görsel korunuyor.</p>
+                  {file && (
+                    <p className="text-[11px] text-emerald-400 mt-1">Yeni görsel seçildi: {file.name}</p>
                   )}
                 </div>
 
@@ -802,22 +823,44 @@ export default function AdminDashboard() {
 
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300 mb-1">ÜRÜN GÖRSELİ 1</label>
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    onChange={(e) => e.target.files && setFile1(e.target.files[0])} 
-                    className="w-full text-xs text-stone-400 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-700 file:text-white hover:file:bg-amber-600 cursor-pointer bg-[#1e100a] border border-amber-900/50 rounded-xl p-2" 
+                  {currentGorsel1 && !file1 && (
+                    <div className="flex items-center gap-3 mb-2 bg-[#1e100a] border border-amber-900/50 rounded-xl p-2">
+                      <div className="relative w-20 h-14 rounded-lg overflow-hidden bg-stone-900 flex-shrink-0 border border-amber-900/50">
+                        <Image src={currentGorsel1} alt="Mevcut görsel 1" fill className="object-cover" />
+                      </div>
+                      <p className="text-[11px] text-amber-400">Mevcut görsel korunuyor. Değiştirmek için yeni bir dosya seçin.</p>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => e.target.files && setFile1(e.target.files[0])}
+                    className="w-full text-xs text-stone-400 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-700 file:text-white hover:file:bg-amber-600 cursor-pointer bg-[#1e100a] border border-amber-900/50 rounded-xl p-2"
                   />
+                  {file1 && (
+                    <p className="text-[11px] text-emerald-400 mt-1">Yeni görsel seçildi: {file1.name}</p>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300 mb-1">ÜRÜN GÖRSELİ 2 (İsteğe Bağlı)</label>
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    onChange={(e) => e.target.files && setFile2(e.target.files[0])} 
-                    className="w-full text-xs text-stone-400 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-700 file:text-white hover:file:bg-amber-600 cursor-pointer bg-[#1e100a] border border-amber-900/50 rounded-xl p-2" 
+                  {currentGorsel2 && !file2 && (
+                    <div className="flex items-center gap-3 mb-2 bg-[#1e100a] border border-amber-900/50 rounded-xl p-2">
+                      <div className="relative w-20 h-14 rounded-lg overflow-hidden bg-stone-900 flex-shrink-0 border border-amber-900/50">
+                        <Image src={currentGorsel2} alt="Mevcut görsel 2" fill className="object-cover" />
+                      </div>
+                      <p className="text-[11px] text-amber-400">Mevcut görsel korunuyor. Değiştirmek için yeni bir dosya seçin.</p>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => e.target.files && setFile2(e.target.files[0])}
+                    className="w-full text-xs text-stone-400 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-700 file:text-white hover:file:bg-amber-600 cursor-pointer bg-[#1e100a] border border-amber-900/50 rounded-xl p-2"
                   />
+                  {file2 && (
+                    <p className="text-[11px] text-emerald-400 mt-1">Yeni görsel seçildi: {file2.name}</p>
+                  )}
                 </div>
 
                 <div className="pt-2 flex gap-2">
