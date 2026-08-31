@@ -186,17 +186,24 @@ export default function HomePage() {
                         alt="Slider Görseli"
                         fill
                         sizes="(min-width: 1280px) 1200px, (min-width: 1024px) 900px, 100vw"
-                        className="object-cover object-center filter brightness-[0.4] lg:brightness-[0.5]"
+                        className="object-cover object-top"
                       />
+                      <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/15 to-transparent" />
                     </div>
                     <div className="relative z-10 max-w-xl text-white">
                       {slider.baslik_durum && slider.baslik && (
-                        <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-3 text-amber-100">
+                        <h2
+                          className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight mb-3 text-amber-100"
+                          style={{ textShadow: '0 0 12px rgba(217,119,6,0.9), 0 0 26px rgba(146,64,14,0.65), 0 2px 6px rgba(0,0,0,0.85)' }}
+                        >
                           {slider.baslik}
                         </h2>
                       )}
                       {slider.slogan_durum && slider.slogan && (
-                        <p className="text-xs md:text-sm text-stone-200 leading-relaxed">
+                        <p
+                          className="text-sm md:text-base text-stone-100 leading-relaxed"
+                          style={{ textShadow: '0 0 8px rgba(180,83,9,0.75), 0 1px 4px rgba(0,0,0,0.85)' }}
+                        >
                           {slider.slogan}
                         </p>
                       )}
