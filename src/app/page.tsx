@@ -284,24 +284,28 @@ export default function HomePage() {
           {filtrelenmisUrunler.length === 0 ? (
             <p className="text-sm text-stone-500 text-center py-12">Bu kategoride henüz ürün bulunmuyor.</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
               {filtrelenmisUrunler.map((urun) => (
-                <div key={urun.id} className="bg-white rounded-xl overflow-hidden border border-stone-200 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+                <Link
+                  key={urun.id}
+                  href={`/urun/${urun.id}`}
+                  className="bg-white rounded-xl overflow-hidden border border-stone-200 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
+                >
                   {urun.urun_gorseli1 && (
-                    <div className="relative h-48 w-full bg-stone-100">
+                    <div className="relative h-28 sm:h-40 md:h-48 w-full bg-stone-100">
                       <Image src={urun.urun_gorseli1} alt={urun.urun_ismi} fill className="object-cover" />
                     </div>
                   )}
-                  <div className="p-4 flex-grow">
+                  <div className="p-2.5 md:p-4 flex-grow">
                     <div className="flex justify-between items-start mb-1 gap-2">
-                      <h3 className="font-bold text-base text-stone-800">{urun.urun_ismi}</h3>
+                      <h3 className="font-bold text-sm md:text-base text-stone-800">{urun.urun_ismi}</h3>
                       {urun.fiyat != null && (
-                        <span className="font-bold text-amber-800 whitespace-nowrap">{urun.fiyat} ₺</span>
+                        <span className="font-bold text-amber-800 text-sm md:text-base whitespace-nowrap">{urun.fiyat} ₺</span>
                       )}
                     </div>
-                    <p className="text-xs text-stone-500">{urun.urun_aciklamasi}</p>
+                    <p className="text-[11px] md:text-xs text-stone-500 line-clamp-2">{urun.urun_aciklamasi}</p>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}
