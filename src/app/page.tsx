@@ -110,10 +110,10 @@ export default function HomePage() {
               <Link href="/" className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-amber-900/40 text-stone-300 hover:text-amber-100 transition-colors">
                 <Home className="w-4 h-4 text-amber-500" /> ANA SAYFA
               </Link>
-              <Link href="#hakkimizda" className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-amber-900/40 text-stone-300 hover:text-amber-100 transition-colors">
+              <Link href="/hakkimizda" className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-amber-900/40 text-stone-300 hover:text-amber-100 transition-colors">
                 <Info className="w-4 h-4 text-amber-500" /> HAKKIMIZDA
               </Link>
-              <Link href="#iletisim" className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-amber-900/40 text-stone-300 hover:text-amber-100 transition-colors">
+              <Link href="#" className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-amber-900/40 text-stone-300 hover:text-amber-100 transition-colors">
                 <Phone className="w-4 h-4 text-amber-500" /> İLETİŞİM
               </Link>
             </div>
