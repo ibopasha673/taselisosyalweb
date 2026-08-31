@@ -309,42 +309,56 @@ export default function HomePage() {
 
         {/* İletişim */}
         <section id="iletisim" className="bg-[#2c1810] border-t border-amber-950/60">
-          <div className="max-w-5xl mx-auto px-4 py-16">
-            <div className="flex items-center gap-2 mb-10 justify-center">
-              <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-              <h2 className="text-xl font-bold text-amber-100">İletişim</h2>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
-              <a
-                href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-col items-center text-center gap-2 bg-[#3b2216] hover:bg-[#4a2e1b] border border-amber-900/40 rounded-xl p-6 transition-colors"
-              >
-                <MessageCircle className="w-6 h-6 text-amber-500" />
-                <span className="text-xs font-semibold text-stone-300 uppercase tracking-wider">WhatsApp</span>
-                <span className="text-sm font-bold text-amber-100">0539 224 75 70</span>
-              </a>
-              <a
-                href={process.env.NEXT_PUBLIC_INSTAGRAM_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-col items-center text-center gap-2 bg-[#3b2216] hover:bg-[#4a2e1b] border border-amber-900/40 rounded-xl p-6 transition-colors"
-              >
-                <InstagramIcon className="w-6 h-6 text-amber-500" />
-                <span className="text-xs font-semibold text-stone-300 uppercase tracking-wider">Instagram</span>
-                <span className="text-sm font-bold text-amber-100">@taselisosyaltesisi</span>
-              </a>
-              <a
-                href={process.env.NEXT_PUBLIC_FACEBOOK_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-col items-center text-center gap-2 bg-[#3b2216] hover:bg-[#4a2e1b] border border-amber-900/40 rounded-xl p-6 transition-colors"
-              >
-                <FacebookIcon className="w-6 h-6 text-amber-500" />
-                <span className="text-xs font-semibold text-stone-300 uppercase tracking-wider">Facebook</span>
-                <span className="text-sm font-bold text-amber-100">Taşeli Sosyal Tesisleri</span>
-              </a>
+          <div className="max-w-5xl mx-auto px-4 py-5">
+            <div className="flex flex-col sm:flex-row sm:items-stretch gap-2 sm:gap-3">
+              <div className="flex items-center gap-2 sm:pr-3 shrink-0">
+                <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                <h2 className="text-sm font-bold text-amber-100 tracking-wide uppercase">İletişim</h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 flex-1">
+                <a
+                  href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2.5 bg-[#3b2216] hover:bg-[#4a2e1b] border border-amber-900/40 rounded-lg px-3 py-2 transition-colors group"
+                >
+                  <div className="w-8 h-8 rounded-md bg-amber-900/40 flex items-center justify-center shrink-0 group-hover:bg-amber-800/50 transition-colors">
+                    <MessageCircle className="w-4 h-4 text-amber-500" />
+                  </div>
+                  <div className="flex flex-col leading-tight min-w-0">
+                    <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">WhatsApp</span>
+                    <span className="text-sm font-bold text-amber-100 truncate">0539 224 75 70</span>
+                  </div>
+                </a>
+                <a
+                  href={process.env.NEXT_PUBLIC_INSTAGRAM_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2.5 bg-[#3b2216] hover:bg-[#4a2e1b] border border-amber-900/40 rounded-lg px-3 py-2 transition-colors group"
+                >
+                  <div className="w-8 h-8 rounded-md bg-amber-900/40 flex items-center justify-center shrink-0 group-hover:bg-amber-800/50 transition-colors">
+                    <InstagramIcon className="w-4 h-4 text-amber-500" />
+                  </div>
+                  <div className="flex flex-col leading-tight min-w-0">
+                    <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Instagram</span>
+                    <span className="text-sm font-bold text-amber-100 truncate">@taselisosyaltesisi</span>
+                  </div>
+                </a>
+                <a
+                  href={process.env.NEXT_PUBLIC_FACEBOOK_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2.5 bg-[#3b2216] hover:bg-[#4a2e1b] border border-amber-900/40 rounded-lg px-3 py-2 transition-colors group"
+                >
+                  <div className="w-8 h-8 rounded-md bg-amber-900/40 flex items-center justify-center shrink-0 group-hover:bg-amber-800/50 transition-colors">
+                    <FacebookIcon className="w-4 h-4 text-amber-500" />
+                  </div>
+                  <div className="flex flex-col leading-tight min-w-0">
+                    <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Facebook</span>
+                    <span className="text-sm font-bold text-amber-100 truncate">Taşeli Sosyal Tesisleri</span>
+                  </div>
+                </a>
+              </div>
             </div>
           </div>
         </section>
