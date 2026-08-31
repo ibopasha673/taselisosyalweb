@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -61,6 +61,11 @@ export default function HomePage() {
   // null => "Tümü" seçili, aksi halde seçili kategorinin id'si
   const [selectedKategoriId, setSelectedKategoriId] = useState<string | null>(null)
 
+  // Üst arama kutusu
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchOpen, setSearchOpen] = useState(false)
+  const searchRef = useRef<HTMLDivElement>(null)
+
   // Admin panelinden "Öne Çıkar" işaretlenen ürünler
   const featuredItems = urunler.filter((u) => u.one_cikanlar)
 
@@ -68,6 +73,25 @@ export default function HomePage() {
   const filtrelenmisUrunler = selectedKategoriId
     ? urunler.filter((u) => u.kategori_uuid === selectedKategoriId)
     : urunler
+
+  // Arama kutusuna yazıldıkça mevcut kategoriler ve ürünler içinde eşleşenler
+  const normalizedQuery = searchQuery.trim().toLocaleLowerCase('tr-TR')
+  const kategoriSonuclari = normalizedQuery
+    ? kategoriler.filter((k) => k.kategori_ismi.toLocaleLowerCase('tr-TR').includes(normalizedQuery)).slice(0, 5)
+    : []
+  const urunSonuclari = normalizedQuery
+    ? urunler.filter((u) => u.urun_ismi.toLocaleLowerCase('tr-TR').includes(normalizedQuery)).slice(0, 8)
+    : []
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   useEffect(() => {
     async function fetchData() {
@@ -112,13 +136,80 @@ export default function HomePage() {
               </div>
             </Link>
 
-            <div className="relative w-full md:w-80">
-              <input 
-                type="text" 
-                placeholder="Yemek veya ürün arayınız..." 
+            <div className="relative w-full md:w-80" ref={searchRef}>
+              <input
+                type="text"
+                placeholder="Yemek veya ürün arayınız..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  setSearchOpen(true)
+                }}
+                onFocus={() => setSearchOpen(true)}
                 className="w-full bg-[#1e100a] border border-amber-900/40 rounded-full py-2 pl-4 pr-10 text-sm text-stone-200 placeholder-stone-400 focus:outline-none focus:border-amber-600 transition-colors"
               />
               <Search className="absolute right-3 top-2.5 w-4 h-4 text-stone-400" />
+
+              {searchOpen && normalizedQuery !== '' && (
+                <div className="absolute left-0 right-0 top-full mt-2 bg-[#1e100a] border border-amber-900/40 rounded-xl shadow-xl overflow-hidden z-50 max-h-80 overflow-y-auto">
+                  {kategoriSonuclari.length === 0 && urunSonuclari.length === 0 ? (
+                    <div className="px-4 py-3 text-xs text-stone-400">Sonuç bulunamadı.</div>
+                  ) : (
+                    <>
+                      {kategoriSonuclari.length > 0 && (
+                        <div className="border-b border-amber-900/30 last:border-b-0">
+                          <div className="px-4 pt-3 pb-1 text-[10px] font-semibold text-amber-500 uppercase tracking-wider">
+                            Kategoriler
+                          </div>
+                          {kategoriSonuclari.map((kat) => (
+                            <button
+                              key={kat.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedKategoriId(kat.id)
+                                setSearchQuery('')
+                                setSearchOpen(false)
+                                document.getElementById('urun-listesi')?.scrollIntoView({ behavior: 'smooth' })
+                              }}
+                              className="w-full flex items-center gap-2 px-4 py-2 text-left text-sm text-stone-200 hover:bg-amber-900/30 transition-colors"
+                            >
+                              <MenuIcon className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                              <span className="truncate">{kat.kategori_ismi}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {urunSonuclari.length > 0 && (
+                        <div>
+                          <div className="px-4 pt-3 pb-1 text-[10px] font-semibold text-amber-500 uppercase tracking-wider">
+                            Ürünler
+                          </div>
+                          {urunSonuclari.map((urun) => (
+                            <Link
+                              key={urun.id}
+                              href={`/urun/${urun.id}`}
+                              onClick={() => {
+                                setSearchQuery('')
+                                setSearchOpen(false)
+                              }}
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-stone-200 hover:bg-amber-900/30 transition-colors"
+                            >
+                              {urun.urun_gorseli1 ? (
+                                <span className="relative w-7 h-7 rounded overflow-hidden bg-stone-700 shrink-0">
+                                  <Image src={urun.urun_gorseli1} alt={urun.urun_ismi} fill className="object-cover" />
+                                </span>
+                              ) : (
+                                <span className="w-7 h-7 rounded bg-stone-700 shrink-0" />
+                              )}
+                              <span className="truncate">{urun.urun_ismi}</span>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -186,7 +277,7 @@ export default function HomePage() {
                         alt="Slider Görseli"
                         fill
                         sizes="(min-width: 1280px) 1200px, (min-width: 1024px) 900px, 100vw"
-                        className="object-cover object-top"
+                        className="object-cover object-bottom"
                       />
                       <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/15 to-transparent" />
                     </div>
