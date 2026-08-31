@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { ShieldCheck, LogOut, Plus, Trash2, Edit3, Image as ImageIcon, Home, ListOrdered, Utensils } from 'lucide-react'
+import { ShieldCheck, LogOut, Plus, Trash2, Edit3, Image as ImageIcon, Home, ListOrdered, Utensils, Star } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -348,6 +348,19 @@ export default function AdminDashboard() {
     }
     await supabase.from('urunler').delete().eq('id', id)
     fetchUrunler()
+  }
+
+  const handleToggleOneCikanlar = async (urun: UrunItem) => {
+    const yeniDeger = !urun.one_cikanlar
+    // Anında görsel geri bildirim için önce ekrandaki listeyi güncelle
+    setUrunler((prev) => prev.map((u) => (u.id === urun.id ? { ...u, one_cikanlar: yeniDeger } : u)))
+
+    const { error } = await supabase.from('urunler').update({ one_cikanlar: yeniDeger }).eq('id', urun.id)
+    if (error) {
+      alert('Öne çıkarma durumu güncellenemedi: ' + error.message)
+      // Hata olursa eski haline geri al
+      setUrunler((prev) => prev.map((u) => (u.id === urun.id ? { ...u, one_cikanlar: !yeniDeger } : u)))
+    }
   }
 
   const handleLogout = async () => {
@@ -774,7 +787,14 @@ export default function AdminDashboard() {
                   <p className="text-xs text-stone-400 text-center py-8">Henüz kayıtlı ürün bulunmuyor.</p>
                 ) : (
                   urunler.map((urun) => (
-                    <div key={urun.id} className="bg-[#2c1810] border border-amber-900/40 p-4 rounded-xl flex items-center justify-between gap-4 shadow-inner">
+                    <div
+                      key={urun.id}
+                      className={`p-4 rounded-xl flex items-center justify-between gap-4 shadow-inner border ${
+                        urun.one_cikanlar
+                          ? 'bg-emerald-950/30 border-emerald-600/60 ring-1 ring-emerald-600/30'
+                          : 'bg-[#2c1810] border-amber-900/40'
+                      }`}
+                    >
                       <div className="flex items-center gap-3">
                         {urun.urun_gorseli1 ? (
                           <div className="relative w-16 h-14 rounded-lg overflow-hidden bg-stone-900 flex-shrink-0 border border-amber-900/50">
@@ -785,7 +805,9 @@ export default function AdminDashboard() {
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-[10px] bg-amber-800/40 text-amber-300 px-2 py-0.5 rounded-full font-semibold">{urun.kategori_ismi}</span>
                             {urun.one_cikanlar && (
-                              <span className="text-[10px] bg-emerald-800/40 text-emerald-300 px-2 py-0.5 rounded-full font-semibold">ÖNE ÇIKAN</span>
+                              <span className="text-[10px] bg-emerald-700 text-white px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
+                                <Star className="w-2.5 h-2.5 fill-white" /> ÖNE ÇIKAN
+                              </span>
                             )}
                           </div>
                           <h4 className="font-bold text-amber-100 text-sm mt-1">
@@ -799,15 +821,26 @@ export default function AdminDashboard() {
                       </div>
 
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <button 
-                          onClick={() => handleEditUrun(urun)} 
+                        <button
+                          onClick={() => handleToggleOneCikanlar(urun)}
+                          className={`p-2 rounded-lg transition-colors border ${
+                            urun.one_cikanlar
+                              ? 'bg-emerald-700 hover:bg-emerald-600 text-white border-emerald-500/50'
+                              : 'bg-[#1e100a] hover:bg-[#2c1810] text-stone-400 border-amber-900/40'
+                          }`}
+                          title={urun.one_cikanlar ? 'Öne çıkarmayı kaldır' : 'Öne çıkar'}
+                        >
+                          <Star className={`w-4 h-4 ${urun.one_cikanlar ? 'fill-white' : ''}`} />
+                        </button>
+                        <button
+                          onClick={() => handleEditUrun(urun)}
                           className="p-2 bg-amber-700/40 hover:bg-amber-700 text-amber-200 rounded-lg transition-colors border border-amber-600/30"
                           title="Düzenle"
                         >
                           <Edit3 className="w-4 h-4" />
                         </button>
-                        <button 
-                          onClick={() => handleDeleteUrun(urun.id, urun.urun_gorseli1, urun.urun_gorseli2)} 
+                        <button
+                          onClick={() => handleDeleteUrun(urun.id, urun.urun_gorseli1, urun.urun_gorseli2)}
                           className="p-2 bg-red-950/60 hover:bg-red-900 text-red-300 rounded-lg transition-colors border border-red-800/50"
                           title="Sil"
                         >
