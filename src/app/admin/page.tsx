@@ -40,6 +40,8 @@ export default function AdminDashboard() {
   const [kategoriler, setKategoriler] = useState<KategoriItem[]>([])
   const [urunler, setUrunler] = useState<UrunItem[]>([])
   const [loading, setLoading] = useState(true)
+  // Yetki kontrolü tamamlanana kadar true kalır; admin içeriği bu bitmeden asla gösterilmez
+  const [checkingAuth, setCheckingAuth] = useState(true)
   
   // Slider State'leri
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -74,9 +76,11 @@ export default function AdminDashboard() {
     async function checkAuthAndFetch() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session || session.user.email !== 'yonetici@taselisosyal.com') {
-        router.push('/admin/login')
+        // Yetkisiz/oturumsuz erişimde içerik hiç render edilmeden doğrudan login'e yönlendir
+        router.replace('/admin/login')
         return
       }
+      setCheckingAuth(false)
       fetchSliders()
       fetchKategoriler()
       fetchUrunler()
@@ -96,7 +100,13 @@ export default function AdminDashboard() {
   }
 
   async function fetchUrunler() {
-    const { data } = await supabase.from('urunler').select('*').order('created_time', { ascending: false })
+    // Öne çıkarılan ürünler (one_cikanlar = true) her zaman listenin en üstünde,
+    // aynı grup içinde ise en yeni eklenen üstte olacak şekilde sıralanır
+    const { data } = await supabase
+      .from('urunler')
+      .select('*')
+      .order('one_cikanlar', { ascending: false })
+      .order('created_time', { ascending: false })
     if (data) setUrunler(data)
   }
 
@@ -360,7 +370,10 @@ export default function AdminDashboard() {
       alert('Öne çıkarma durumu güncellenemedi: ' + error.message)
       // Hata olursa eski haline geri al
       setUrunler((prev) => prev.map((u) => (u.id === urun.id ? { ...u, one_cikanlar: !yeniDeger } : u)))
+      return
     }
+    // Sunucudaki doğru sırayla (öne çıkanlar üstte) listeyi yenile
+    fetchUrunler()
   }
 
   const handleLogout = async () => {
@@ -368,8 +381,15 @@ export default function AdminDashboard() {
     router.push('/admin/login')
   }
 
-  if (loading) {
-    return <div className="min-h-screen bg-[#2c1810] text-amber-100 flex items-center justify-center font-sans">Yükleniyor...</div>
+  if (checkingAuth || loading) {
+    return (
+      <div className="min-h-screen bg-[#2c1810] text-amber-100 flex flex-col items-center justify-center gap-3 font-sans">
+        <div className="w-10 h-10 border-4 border-amber-800 border-t-amber-300 rounded-full animate-spin"></div>
+        <p className="text-sm text-stone-300 tracking-wide">
+          {checkingAuth ? 'Yetki kontrol ediliyor...' : 'Yükleniyor...'}
+        </p>
+      </div>
+    )
   }
 
   return (
