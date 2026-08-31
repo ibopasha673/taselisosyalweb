@@ -261,7 +261,7 @@ export default function HomePage() {
             </div>
 
             {/* Sağ Kısım: 7 Saniyede Bir Kayan Slider */}
-            <div className="lg:col-span-3 relative h-[260px] md:h-[310px] lg:h-[380px] xl:h-[440px] rounded-2xl overflow-hidden shadow-md bg-[#2c1810] flex items-center">
+            <div className="lg:col-span-3 relative h-[260px] md:h-[360px] lg:h-[440px] xl:h-[520px] rounded-2xl overflow-hidden shadow-md bg-[#2c1810] flex items-center">
               {sliders.length === 0 ? (
                 <div className="absolute inset-0 flex items-center justify-center text-stone-400 text-sm">
                   Henüz slider eklenmedi.
@@ -286,7 +286,6 @@ export default function HomePage() {
                             : 'object-center'
                         }`}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/15 to-transparent" />
                     </div>
                     <div className="relative z-10 max-w-xl text-white">
                       {slider.baslik_durum && slider.baslik && (
