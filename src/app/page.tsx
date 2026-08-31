@@ -29,6 +29,8 @@ type UrunItem = {
   urun_aciklamasi: string
   urun_gorseli1: string
   urun_gorseli2: string
+  one_cikanlar: boolean
+  fiyat: number | null
 }
 
 export default function HomePage() {
@@ -37,9 +39,8 @@ export default function HomePage() {
   const [urunler, setUrunler] = useState<UrunItem[]>([])
   const [currentSlide, setCurrentSlide] = useState(0)
 
-  // "Öne Çıkan Lezzetlerimiz" bölümü, ayrı bir 'menu' tablosu olmadığı için
-  // urunler tablosundaki en yeni 3 ürünü gösterir.
-  const featuredItems = urunler.slice(0, 3)
+  // Admin panelinden "Öne Çıkar" işaretlenen ürünler
+  const featuredItems = urunler.filter((u) => u.one_cikanlar)
 
   useEffect(() => {
     async function fetchData() {
@@ -188,6 +189,34 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Öne Çıkanlar */}
+        {featuredItems.length > 0 && (
+          <section className="max-w-7xl mx-auto px-4 pb-10">
+            <div className="flex items-center gap-2 mb-6 border-b border-stone-200 pb-3">
+              <div className="w-3 h-3 rounded-full bg-amber-800"></div>
+              <h2 className="text-xl font-bold text-stone-800">Öne Çıkanlar</h2>
+            </div>
+
+            <div className="flex gap-4 overflow-x-auto pb-2">
+              {featuredItems.map((item) => (
+                <div key={item.id} className="w-40 sm:w-48 flex-shrink-0 bg-white rounded-xl overflow-hidden border border-stone-200 shadow-sm hover:shadow-md transition-shadow">
+                  {item.urun_gorseli1 && (
+                    <div className="relative h-28 sm:h-32 w-full bg-stone-100">
+                      <Image src={item.urun_gorseli1} alt={item.urun_ismi} fill className="object-cover" />
+                    </div>
+                  )}
+                  <div className="p-3">
+                    <h3 className="font-bold text-sm text-stone-800 truncate">{item.urun_ismi}</h3>
+                    {item.fiyat != null && (
+                      <span className="text-sm font-bold text-amber-800">{item.fiyat} ₺</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Kategorilere Göre Ürün Listeleme Alanı */}
         <section className="max-w-7xl mx-auto px-4 pb-16 space-y-12">
           {kategoriler.map((kat) => {
@@ -210,7 +239,12 @@ export default function HomePage() {
                         </div>
                       )}
                       <div className="p-4 flex-grow">
-                        <h3 className="font-bold text-base text-stone-800 mb-1">{urun.urun_ismi}</h3>
+                        <div className="flex justify-between items-start mb-1 gap-2">
+                          <h3 className="font-bold text-base text-stone-800">{urun.urun_ismi}</h3>
+                          {urun.fiyat != null && (
+                            <span className="font-bold text-amber-800 whitespace-nowrap">{urun.fiyat} ₺</span>
+                          )}
+                        </div>
                         <p className="text-xs text-stone-500">{urun.urun_aciklamasi}</p>
                       </div>
                     </div>
@@ -219,37 +253,6 @@ export default function HomePage() {
               </div>
             )
           })}
-        </section>
-
-        {/* Öne Çıkan Lezzetlerimiz */}
-        <section className="max-w-7xl mx-auto px-4 pb-16">
-          <div className="flex items-center justify-between mb-6 border-b border-stone-200 pb-3">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-amber-800"></div>
-              <h2 className="text-xl font-bold text-stone-800">Öne Çıkan Lezzetlerimiz</h2>
-            </div>
-            <Link href="/menu" className="text-sm font-semibold text-amber-800 hover:text-amber-950 transition-colors">
-              Tümünü Gör →
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {featuredItems.map((item) => (
-              <div key={item.id} className="bg-white rounded-xl overflow-hidden border border-stone-200 shadow-sm hover:shadow-md transition-shadow">
-                {item.urun_gorseli1 && (
-                  <div className="relative h-48 w-full bg-stone-100">
-                    <Image src={item.urun_gorseli1} alt={item.urun_ismi} fill className="object-cover" />
-                  </div>
-                )}
-                <div className="p-4">
-                  <div className="flex justify-between items-start mb-1">
-                    <h3 className="font-bold text-base text-stone-800">{item.urun_ismi}</h3>
-                  </div>
-                  <p className="text-xs text-stone-500">{item.urun_aciklamasi}</p>
-                </div>
-              </div>
-            ))}
-          </div>
         </section>
       </div>
 

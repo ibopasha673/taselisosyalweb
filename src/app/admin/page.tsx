@@ -30,6 +30,8 @@ type UrunItem = {
   urun_aciklamasi: string
   urun_gorseli1: string
   urun_gorseli2: string
+  one_cikanlar: boolean
+  fiyat: number | null
 }
 
 export default function AdminDashboard() {
@@ -58,6 +60,8 @@ export default function AdminDashboard() {
   const [secilenKategoriUuid, setSecilenKategoriUuid] = useState('')
   const [urunIsmi, setUrunIsmi] = useState('')
   const [urunAciklamasi, setUrunAciklamasi] = useState('')
+  const [fiyat, setFiyat] = useState('')
+  const [oneCikanlar, setOneCikanlar] = useState(false)
   const [file1, setFile1] = useState<File | null>(null)
   const [file2, setFile2] = useState<File | null>(null)
   const [currentGorsel1, setCurrentGorsel1] = useState('')
@@ -244,6 +248,8 @@ export default function AdminDashboard() {
       gorsel2_url = supabase.storage.from('urunler').getPublicUrl(fn2).data.publicUrl
     }
 
+    const fiyatValue = fiyat.trim() === '' ? null : Number(fiyat)
+
     if (editingUrunId) {
       await supabase.from('urunler').update({
         kategori_uuid: secilenKategoriUuid,
@@ -251,7 +257,9 @@ export default function AdminDashboard() {
         urun_ismi: urunIsmi,
         urun_aciklamasi: urunAciklamasi,
         urun_gorseli1: gorsel1_url,
-        urun_gorseli2: gorsel2_url
+        urun_gorseli2: gorsel2_url,
+        fiyat: fiyatValue,
+        one_cikanlar: oneCikanlar
       }).eq('id', editingUrunId)
     } else {
       await supabase.from('urunler').insert([{
@@ -260,13 +268,17 @@ export default function AdminDashboard() {
         urun_ismi: urunIsmi,
         urun_aciklamasi: urunAciklamasi,
         urun_gorseli1: gorsel1_url,
-        urun_gorseli2: gorsel2_url
+        urun_gorseli2: gorsel2_url,
+        fiyat: fiyatValue,
+        one_cikanlar: oneCikanlar
       }])
     }
 
     setSecilenKategoriUuid('')
     setUrunIsmi('')
     setUrunAciklamasi('')
+    setFiyat('')
+    setOneCikanlar(false)
     setFile1(null)
     setFile2(null)
     setCurrentGorsel1('')
@@ -299,6 +311,8 @@ export default function AdminDashboard() {
     setSecilenKategoriUuid(urun.kategori_uuid)
     setUrunIsmi(urun.urun_ismi)
     setUrunAciklamasi(urun.urun_aciklamasi || '')
+    setFiyat(urun.fiyat != null ? String(urun.fiyat) : '')
+    setOneCikanlar(urun.one_cikanlar || false)
     setCurrentGorsel1(urun.urun_gorseli1 || '')
     setCurrentGorsel2(urun.urun_gorseli2 || '')
     setFile1(null)
@@ -675,14 +689,37 @@ export default function AdminDashboard() {
 
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300 mb-1">ÜRÜN AÇIKLAMASI</label>
-                  <textarea 
-                    value={urunAciklamasi} 
-                    onChange={(e) => setUrunAciklamasi(e.target.value)} 
-                    rows={2} 
-                    placeholder="Açıklama..." 
-                    className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl px-4 py-2.5 text-sm text-stone-100 focus:outline-none focus:border-amber-600" 
+                  <textarea
+                    value={urunAciklamasi}
+                    onChange={(e) => setUrunAciklamasi(e.target.value)}
+                    rows={2}
+                    placeholder="Açıklama..."
+                    className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl px-4 py-2.5 text-sm text-stone-100 focus:outline-none focus:border-amber-600"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300 mb-1">FİYAT (₺) (İsteğe Bağlı)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={fiyat}
+                    onChange={(e) => setFiyat(e.target.value)}
+                    placeholder="Örn: 120"
+                    className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl px-4 py-2.5 text-sm text-stone-100 focus:outline-none focus:border-amber-600"
+                  />
+                </div>
+
+                <label className="flex items-center gap-2 text-xs font-semibold text-stone-300 cursor-pointer bg-[#1e100a] border border-amber-900/50 rounded-xl px-4 py-2.5">
+                  <input
+                    type="checkbox"
+                    checked={oneCikanlar}
+                    onChange={(e) => setOneCikanlar(e.target.checked)}
+                    className="w-4 h-4 accent-amber-600 rounded bg-[#1e100a] border-amber-900"
+                  />
+                  ÖNE ÇIKAR (Anasayfada &quot;Öne Çıkanlar&quot; şeridinde göster)
+                </label>
 
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300 mb-1">ÜRÜN GÖRSELİ 1</label>
@@ -715,7 +752,7 @@ export default function AdminDashboard() {
                   {editingUrunId && (
                     <button 
                       type="button" 
-                      onClick={() => { setEditingUrunId(null); setSecilenKategoriUuid(''); setUrunIsmi(''); setUrunAciklamasi(''); setFile1(null); setFile2(null); }} 
+                      onClick={() => { setEditingUrunId(null); setSecilenKategoriUuid(''); setUrunIsmi(''); setUrunAciklamasi(''); setFiyat(''); setOneCikanlar(false); setFile1(null); setFile2(null); }}
                       className="bg-stone-700 hover:bg-stone-600 text-stone-200 px-4 py-3 rounded-xl text-xs font-bold"
                     >
                       İPTAL
@@ -745,8 +782,18 @@ export default function AdminDashboard() {
                           </div>
                         ) : null}
                         <div>
-                          <span className="text-[10px] bg-amber-800/40 text-amber-300 px-2 py-0.5 rounded-full font-semibold">{urun.kategori_ismi}</span>
-                          <h4 className="font-bold text-amber-100 text-sm mt-1">{urun.urun_ismi}</h4>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[10px] bg-amber-800/40 text-amber-300 px-2 py-0.5 rounded-full font-semibold">{urun.kategori_ismi}</span>
+                            {urun.one_cikanlar && (
+                              <span className="text-[10px] bg-emerald-800/40 text-emerald-300 px-2 py-0.5 rounded-full font-semibold">ÖNE ÇIKAN</span>
+                            )}
+                          </div>
+                          <h4 className="font-bold text-amber-100 text-sm mt-1">
+                            {urun.urun_ismi}
+                            {urun.fiyat != null && (
+                              <span className="text-amber-400 font-semibold"> — {urun.fiyat} ₺</span>
+                            )}
+                          </h4>
                           <p className="text-xs text-stone-400 truncate max-w-xs">{urun.urun_aciklamasi}</p>
                         </div>
                       </div>
