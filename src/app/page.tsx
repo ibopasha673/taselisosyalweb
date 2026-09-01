@@ -118,7 +118,7 @@ export default function HomePage() {
   }, [sliders.length])
 
   return (
-    <div className="min-h-screen bg-[#fcfbf9] text-stone-800 font-sans flex flex-col justify-between">
+    <div className="min-h-screen bg-gradient-to-b from-[#e9dbc3] via-[#f4ebdd] to-[#fcfbf9] text-stone-800 font-sans flex flex-col justify-between">
       <div>
         {/* Üst İnce Duyuru Barı */}
         <div className="bg-[#4a2e1b] text-amber-100 text-xs md:text-sm py-2 text-center font-medium tracking-wide px-4">
