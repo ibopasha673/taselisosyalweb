@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { Lock, Mail, AlertCircle } from 'lucide-react'
+import Link from 'next/link'
+import { Lock, Mail, AlertCircle, ArrowLeft } from 'lucide-react'
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('')
@@ -111,7 +112,15 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen bg-[#2c1810] flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-[#3b2216] border border-amber-900/40 rounded-2xl p-8 shadow-2xl text-stone-200">
+      <div className="max-w-md w-full">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-amber-500 hover:text-amber-400 transition-colors mb-4"
+        >
+          <ArrowLeft className="w-4 h-4" /> Ana Sayfaya Dön
+        </Link>
+
+        <div className="bg-[#3b2216] border border-amber-900/40 rounded-2xl p-8 shadow-2xl text-stone-200">
         <div className="text-center mb-8">
           <div className="w-12 h-12 bg-amber-700/30 rounded-full flex items-center justify-center mx-auto mb-3 border border-amber-600/40">
             <Lock className="w-6 h-6 text-amber-500" />
@@ -167,8 +176,8 @@ export default function AdminLoginPage() {
               </div>
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={loading}
               className="w-full bg-amber-700 hover:bg-amber-600 text-white font-medium py-2.5 rounded-xl transition-all shadow-lg text-sm mt-2 disabled:opacity-50"
             >
@@ -176,6 +185,7 @@ export default function AdminLoginPage() {
             </button>
           </form>
         )}
+        </div>
       </div>
     </div>
   )
