@@ -940,19 +940,19 @@ export default function AdminDashboard() {
                   gosterilecekUrunler.map((urun) => (
                     <div
                       key={urun.id}
-                      className={`p-4 rounded-xl flex items-center justify-between gap-4 shadow-inner border ${
+                      className={`p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-inner border overflow-hidden ${
                         urun.one_cikanlar
                           ? 'bg-emerald-950/30 border-emerald-600/60 ring-1 ring-emerald-600/30'
                           : 'bg-[#2c1810] border-amber-900/40'
                       }`}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
                         {urun.urun_gorseli1 ? (
                           <div className="relative w-16 h-14 rounded-lg overflow-hidden bg-stone-900 flex-shrink-0 border border-amber-900/50">
                             <Image src={urun.urun_gorseli1} alt="Ürün" fill className="object-cover" />
                           </div>
                         ) : null}
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-[10px] bg-amber-800/40 text-amber-300 px-2 py-0.5 rounded-full font-semibold">{urun.kategori_ismi}</span>
                             {urun.one_cikanlar && (
@@ -961,17 +961,17 @@ export default function AdminDashboard() {
                               </span>
                             )}
                           </div>
-                          <h4 className="font-bold text-amber-100 text-sm mt-1">
+                          <h4 className="font-bold text-amber-100 text-sm mt-1 break-words">
                             {urun.urun_ismi}
                             {urun.fiyat != null && (
                               <span className="text-amber-400 font-semibold"> — {urun.fiyat} ₺</span>
                             )}
                           </h4>
-                          <p className="text-xs text-stone-400 truncate max-w-xs">{urun.urun_aciklamasi}</p>
+                          <p className="text-xs text-stone-400 truncate">{urun.urun_aciklamasi}</p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-auto">
                         <button
                           onClick={() => handleToggleOneCikanlar(urun)}
                           className={`p-2 rounded-lg transition-colors border ${

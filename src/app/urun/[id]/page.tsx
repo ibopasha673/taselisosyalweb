@@ -124,7 +124,7 @@ export default function UrunDetayPage() {
               )}
               <div className="p-6 md:p-8">
                 <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
-                  <h1 className="text-2xl md:text-3xl font-extrabold text-stone-800">{urun.urun_ismi}</h1>
+                  <h1 className="text-2xl md:text-3xl font-extrabold text-stone-800 break-words min-w-0">{urun.urun_ismi}</h1>
                   {urun.fiyat != null && (
                     <span className="text-xl md:text-2xl font-bold text-amber-800 whitespace-nowrap">{urun.fiyat} ₺</span>
                   )}
@@ -134,7 +134,7 @@ export default function UrunDetayPage() {
                     {urun.kategori_ismi}
                   </span>
                 )}
-                <p className="text-sm md:text-base text-stone-600 leading-relaxed mb-8">{urun.urun_aciklamasi}</p>
+                <p className="text-sm md:text-base text-stone-600 leading-relaxed mb-8 break-words">{urun.urun_aciklamasi}</p>
 
                 <a
                   href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}?text=${whatsappMesaji}`}
