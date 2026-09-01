@@ -133,8 +133,18 @@ export default function HomePage() {
                 <Image src="/logo.png" alt="Taşeli Sosyal Tesisleri" fill className="object-cover" />
               </div>
               <div>
-                <span className="block font-bold text-lg md:text-xl tracking-wider text-amber-100">TAŞELİ SOSYAL TESİSLERİ</span>
-                <span className="text-xs font-semibold tracking-widest text-amber-500">SARIVELİLER</span>
+                <span
+                  className="block font-bold text-lg md:text-xl tracking-wider text-amber-100"
+                  style={{ textShadow: '0 0 10px rgba(180,83,9,0.9), 0 0 22px rgba(120,53,15,0.65)' }}
+                >
+                  TAŞELİ SOSYAL TESİSLERİ
+                </span>
+                <span
+                  className="text-xs font-semibold tracking-widest text-amber-500"
+                  style={{ textShadow: '0 0 8px rgba(180,83,9,0.85), 0 0 16px rgba(120,53,15,0.55)' }}
+                >
+                  SARIVELİLER
+                </span>
               </div>
             </Link>
 
@@ -239,7 +249,10 @@ export default function HomePage() {
             
             {/* Sol Kısım: Dinamik Kategoriler */}
             <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
-              <div className="bg-[#4a2e1b] text-amber-100 px-4 py-3 font-bold text-sm tracking-wide">
+              <div
+                className="bg-[#4a2e1b] text-amber-100 px-4 py-3 font-bold text-sm tracking-wide"
+                style={{ textShadow: '0 0 10px rgba(217,119,6,0.9), 0 0 22px rgba(146,64,14,0.65)' }}
+              >
                 YEMEK KATEGORİLERİ
               </div>
               <div className="divide-y divide-stone-100 text-sm">
