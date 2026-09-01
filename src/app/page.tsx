@@ -102,7 +102,8 @@ export default function HomePage() {
       const { data: kategoriData } = await supabase.from('kategoriler').select('*').order('sira_numarasi', { ascending: true })
       if (kategoriData) setKategoriler(kategoriData)
 
-      const { data: urunData } = await supabase.from('urunler').select('*').order('created_time', { ascending: false })
+      // Ürünler eklenme sırasına göre (1. ürün en üstte, sonra 2., 3'...) gösterilsin
+      const { data: urunData } = await supabase.from('urunler').select('*').order('created_time', { ascending: true })
       if (urunData) setUrunler(urunData)
     }
     fetchData()

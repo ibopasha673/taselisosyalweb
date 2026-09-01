@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { ShieldCheck, LogOut, Plus, Trash2, Edit3, Image as ImageIcon, Home, ListOrdered, Utensils, Star } from 'lucide-react'
+import { ShieldCheck, LogOut, Plus, Trash2, Edit3, Image as ImageIcon, Home, ListOrdered, Utensils, Star, Search } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -71,6 +71,9 @@ export default function AdminDashboard() {
   const [file2, setFile2] = useState<File | null>(null)
   const [currentGorsel1, setCurrentGorsel1] = useState('')
   const [currentGorsel2, setCurrentGorsel2] = useState('')
+
+  // Ürün/kategori listesinde arama
+  const [urunAramaQuery, setUrunAramaQuery] = useState('')
 
   const [submitting, setSubmitting] = useState(false)
   const router = useRouter()
@@ -400,6 +403,16 @@ export default function AdminDashboard() {
     await supabase.auth.signOut()
     router.push('/admin/login')
   }
+
+  // Ürün ismi veya kategori ismine göre arama (Türkçe karakter duyarlı)
+  const normalizedUrunArama = urunAramaQuery.trim().toLocaleLowerCase('tr-TR')
+  const gosterilecekUrunler = normalizedUrunArama
+    ? urunler.filter(
+        (u) =>
+          u.urun_ismi.toLocaleLowerCase('tr-TR').includes(normalizedUrunArama) ||
+          (u.kategori_ismi || '').toLocaleLowerCase('tr-TR').includes(normalizedUrunArama)
+      )
+    : urunler
 
   if (checkingAuth || loading) {
     return (
@@ -902,16 +915,29 @@ export default function AdminDashboard() {
 
             {/* Sağ Kısım: Kayıtlı Ürünler Listesi */}
             <div className="lg:col-span-7 bg-[#3b2216] border border-amber-900/40 p-6 rounded-2xl shadow-xl">
-              <div className="flex items-center gap-2 mb-6 border-b border-amber-900/40 pb-3 text-amber-200 font-bold text-sm">
+              <div className="flex items-center gap-2 mb-4 border-b border-amber-900/40 pb-3 text-amber-200 font-bold text-sm">
                 <Utensils className="w-5 h-5 text-amber-500" />
                 <span>KAYITLI ÜRÜNLER ({urunler.length})</span>
+              </div>
+
+              <div className="relative mb-4">
+                <input
+                  type="text"
+                  value={urunAramaQuery}
+                  onChange={(e) => setUrunAramaQuery(e.target.value)}
+                  placeholder="Ürün veya kategori adına göre ara..."
+                  className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl pl-9 pr-4 py-2.5 text-sm text-stone-100 placeholder-stone-500 focus:outline-none focus:border-amber-600"
+                />
+                <Search className="absolute left-3 top-3 w-4 h-4 text-stone-500" />
               </div>
 
               <div className="space-y-4">
                 {urunler.length === 0 ? (
                   <p className="text-xs text-stone-400 text-center py-8">Henüz kayıtlı ürün bulunmuyor.</p>
+                ) : gosterilecekUrunler.length === 0 ? (
+                  <p className="text-xs text-stone-400 text-center py-8">Aramanızla eşleşen ürün bulunamadı.</p>
                 ) : (
-                  urunler.map((urun) => (
+                  gosterilecekUrunler.map((urun) => (
                     <div
                       key={urun.id}
                       className={`p-4 rounded-xl flex items-center justify-between gap-4 shadow-inner border ${
