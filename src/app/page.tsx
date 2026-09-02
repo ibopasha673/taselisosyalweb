@@ -260,15 +260,18 @@ export default function HomePage() {
                   <div className="px-4 py-3 text-stone-500 text-xs">Henüz kategori eklenmedi.</div>
                 ) : (
                   kategoriler.map((kat) => (
-                    <Link
+                    <button
                       key={kat.id}
-                      href="#urun-listesi"
-                      onClick={() => setSelectedKategoriId(kat.id)}
-                      className="flex items-center justify-between px-4 py-3 text-stone-700 hover:bg-amber-50 hover:text-amber-900 transition-colors"
+                      type="button"
+                      onClick={() => {
+                        setSelectedKategoriId(kat.id)
+                        document.getElementById('urun-listesi')?.scrollIntoView({ behavior: 'smooth' })
+                      }}
+                      className="w-full flex items-center justify-between px-4 py-3 text-stone-700 hover:bg-amber-50 hover:text-amber-900 transition-colors text-left"
                     >
                       <span className="font-medium">{kat.kategori_ismi}</span>
                       <ChevronRight className="w-4 h-4 text-stone-400" />
-                    </Link>
+                    </button>
                   ))
                 )}
               </div>
