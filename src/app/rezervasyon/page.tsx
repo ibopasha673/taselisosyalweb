@@ -44,8 +44,9 @@ export default function RezervasyonPage() {
   const [tabloYok, setTabloYok] = useState(false)
   const [secilenMasa, setSecilenMasa] = useState<MasaTanimi | null>(null)
   const [form, setForm] = useState<RezervasyonForm>(BOS_FORM)
-  const [adim, setAdim] = useState<'form' | 'telefon-onay'>('form')
+  const [adim, setAdim] = useState<'form' | 'telefon-onay' | 'gonderildi'>('form')
   const [hata, setHata] = useState('')
+  const [gonderiliyor, setGonderiliyor] = useState(false)
   const bugun = new Date().toISOString().slice(0, 10)
 
   useEffect(() => {
@@ -70,7 +71,7 @@ export default function RezervasyonPage() {
     const gun = gunHesapla(form.tarih)
     const tarihGosterim = form.tarih ? new Date(form.tarih + 'T00:00:00').toLocaleDateString('tr-TR') : ''
     const mesaj = [
-      `Merhaba, ${masaAdi} (${tanim.kisaltma}) için rezervasyon yapmak istiyorum.`,
+      `Merhaba, ${masaAdi} (${tanim.kisaltma}) için rezervasyon yaptım, sizi bilgilendirmek istiyorum.`,
       '',
       `Ad Soyad: ${form.isim} ${form.soyisim}`,
       `Telefon: ${form.telefon}`,
@@ -79,6 +80,42 @@ export default function RezervasyonPage() {
       `Saat: ${form.saat}`,
     ].join('\n')
     window.open(`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}?text=${encodeURIComponent(mesaj)}`, '_blank')
+  }
+
+  // Telefon onaylandıktan sonra: rezervasyonu "mevcut_rezervasyonlar" kuyruğuna
+  // durum=false (bekliyor) olarak ekler. Yönetici WhatsApp'tan haberdar olduktan
+  // sonra panelden "Aktif Et" diyerek onaylayacak.
+  async function rezervasyonuGonder() {
+    if (!secilenMasa) return
+    const kayit = kayitlar[secilenMasa.kisaltma]
+    if (!kayit) {
+      setHata("Bu masa için rezervasyon altyapısı henüz hazır değil. Lütfen WhatsApp'tan bize ulaşın.")
+      setAdim('form')
+      return
+    }
+    setGonderiliyor(true)
+    const { error } = await supabase.from('mevcut_rezervasyonlar').insert([
+      {
+        masa_uuid: kayit.id,
+        masa_ismi: kayit.masa_adi,
+        masa_kisaltmasi: secilenMasa.kisaltma,
+        isim: form.isim.trim(),
+        soyisim: form.soyisim.trim(),
+        telefon_numarasi: form.telefon.trim(),
+        kac_kisi: Number(form.kacKisi),
+        rezervasyon_tarihi: form.tarih,
+        rezervasyon_saati: form.saat,
+        rezervasyon_tarihi_gunu: gunHesapla(form.tarih),
+        durum: false,
+      },
+    ])
+    setGonderiliyor(false)
+    if (error) {
+      setHata("Rezervasyon gönderilemedi, lütfen tekrar deneyin ya da WhatsApp'tan bize ulaşın.")
+      setAdim('form')
+      return
+    }
+    setAdim('gonderildi')
   }
 
   function masaSec(tanim: MasaTanimi) {
@@ -180,8 +217,8 @@ export default function RezervasyonPage() {
           <div className="mb-6">
             <h1 className="text-2xl md:text-3xl font-extrabold text-stone-800 mb-2">Masa Rezervasyonu</h1>
             <p className="text-sm text-stone-600 leading-relaxed max-w-2xl">
-              Aşağıdaki kroki üzerinden boş bir masaya tıkla; WhatsApp&apos;tan masa bilgisiyle birlikte bize
-              ulaşacaksın, rezervasyonunu birlikte kesinleştirelim.
+              Aşağıdaki kroki üzerinden boş bir masaya tıkla, bilgilerini gir; rezervasyon talebin yönetime
+              iletilsin. Ardından WhatsApp&apos;tan da bizi bilgilendirerek rezervasyonunu hızlandırabilirsin.
             </p>
           </div>
 
@@ -342,18 +379,17 @@ export default function RezervasyonPage() {
                   <p className="text-lg font-bold text-stone-800 tracking-wide">{form.telefon}</p>
                 </div>
                 <p className="text-xs text-stone-600 text-center leading-relaxed">
-                  Bu numara doğru mu? Rezervasyon talebiniz WhatsApp&apos;tan bu bilgilerle iletilecek.
+                  Bu numara doğru mu? Rezervasyon talebiniz bu bilgilerle yönetime iletilecek.
                 </p>
+                {hata && <p className="text-xs font-semibold text-red-600 text-center">{hata}</p>}
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      whatsappaGit(secilenMasa)
-                      kapat()
-                    }}
-                    className="flex-1 inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-3 rounded-xl text-sm tracking-wide transition-colors"
+                    onClick={rezervasyonuGonder}
+                    disabled={gonderiliyor}
+                    className="flex-1 inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-3 rounded-xl text-sm tracking-wide transition-colors disabled:opacity-60"
                   >
-                    <MessageCircle className="w-4 h-4" /> Evet, WhatsApp&apos;tan Gönder
+                    {gonderiliyor ? 'Gönderiliyor...' : 'Evet, Rezervasyonu Gönder'}
                   </button>
                   <button
                     type="button"
@@ -363,6 +399,35 @@ export default function RezervasyonPage() {
                     Düzelt
                   </button>
                 </div>
+              </div>
+            )}
+
+            {adim === 'gonderildi' && secilenMasa && (
+              <div className="space-y-4">
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
+                  <p className="text-sm font-bold text-emerald-800 mb-1">Rezervasyonunuz gönderildi</p>
+                  <p className="text-xs text-emerald-700 leading-relaxed">
+                    Rezervasyonunuz Taşeli Sosyal Tesisleri yönetimine gönderildi. Lütfen WhatsApp&apos;tan bizleri
+                    bilgilendirin.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    whatsappaGit(secilenMasa)
+                    kapat()
+                  }}
+                  className="w-full inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-3 rounded-xl text-sm tracking-wide transition-colors"
+                >
+                  <MessageCircle className="w-4 h-4" /> WhatsApp&apos;tan Bilgilendir
+                </button>
+                <button
+                  type="button"
+                  onClick={kapat}
+                  className="w-full text-center text-xs text-stone-500 hover:text-stone-700 py-1 transition-colors"
+                >
+                  Kapat
+                </button>
               </div>
             )}
           </div>

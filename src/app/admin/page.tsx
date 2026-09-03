@@ -8,6 +8,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { type MasaTanimi } from '@/lib/masalar'
 import { RezervasyonKrokisi, type RezervasyonKaydi } from '@/components/RezervasyonKrokisi'
+import { RezervasyonTalepleri } from '@/components/RezervasyonTalepleri'
 
 type SliderItem = {
   id: string
@@ -1154,39 +1155,44 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === 'rezervasyon' && (
-          <div className="bg-[#3b2216] border border-amber-900/40 p-6 rounded-2xl shadow-xl">
-            <div className="flex items-center gap-2 mb-4 border-b border-amber-900/40 pb-3 text-amber-200 font-bold text-sm">
-              <CalendarCheck className="w-5 h-5 text-amber-500" />
-              <span>MASA REZERVASYON DURUMU</span>
-            </div>
+          <div className="space-y-6">
+            <RezervasyonTalepleri onMasaDurumuDegisti={fetchRezervasyonlar} />
 
-            <p className="text-xs text-stone-400 mb-4 leading-relaxed">
-              Rezervasyon talepleri WhatsApp&apos;a düşer. Mesajı okuyup krokiden masaya tıkla: boş bir masaya
-              tıklayınca doğrudan bilgileri girip dolu işaretleyebilirsin; dolu bir masaya tıklayınca daha önce
-              girilen rezervasyon bilgileri karşına çıkar. Site anında bu bilgiye göre güncellenir.
-            </p>
-
-            {rezervasyonlar.length === 0 && (
-              <div className="mb-4 bg-amber-950/40 border border-amber-800/50 text-amber-200 text-xs rounded-lg px-4 py-3">
-                Henüz masa bulunamadı. <code className="font-mono">rezervasyon</code> tablosunun Supabase&apos;te
-                oluşturulduğundan emin ol.
+            <div className="bg-[#3b2216] border border-amber-900/40 p-6 rounded-2xl shadow-xl">
+              <div className="flex items-center gap-2 mb-4 border-b border-amber-900/40 pb-3 text-amber-200 font-bold text-sm">
+                <CalendarCheck className="w-5 h-5 text-amber-500" />
+                <span>MASA REZERVASYON DURUMU</span>
               </div>
-            )}
 
-            {/* Lejant */}
-            <div className="flex flex-wrap items-center gap-4 mb-4 text-xs text-stone-300">
-              <div className="flex items-center gap-1.5">
-                <span className="w-3.5 h-3.5 rounded-sm bg-[#f2d9b6] border border-[#b45309] inline-block" /> Boş —
-                tıkla, bilgi gir
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-3.5 h-3.5 rounded-sm bg-stone-200 border border-stone-400 inline-block" /> Dolu —
-                tıkla, detayı gör
-              </div>
-            </div>
+              <p className="text-xs text-stone-400 mb-4 leading-relaxed">
+                Aktif edilen rezervasyonlar krokide otomatik olarak dolu görünür. Mesajı okuyup krokiden masaya da
+                tıklayabilirsin: boş bir masaya tıklayınca doğrudan bilgileri girip dolu işaretleyebilirsin; dolu bir
+                masaya tıklayınca daha önce girilen rezervasyon bilgileri karşına çıkar. Site anında bu bilgiye göre
+                güncellenir.
+              </p>
 
-            <div className="bg-[#fdf8ef] border border-[#c9a97e] rounded-2xl shadow-sm p-3 md:p-5">
-              <RezervasyonKrokisi kayitlar={rezervasyonMap} onMasaTikla={handleMasaTiklaAdmin} tumuTiklanabilir />
+              {rezervasyonlar.length === 0 && (
+                <div className="mb-4 bg-amber-950/40 border border-amber-800/50 text-amber-200 text-xs rounded-lg px-4 py-3">
+                  Henüz masa bulunamadı. <code className="font-mono">rezervasyon</code> tablosunun Supabase&apos;te
+                  oluşturulduğundan emin ol.
+                </div>
+              )}
+
+              {/* Lejant */}
+              <div className="flex flex-wrap items-center gap-4 mb-4 text-xs text-stone-300">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3.5 h-3.5 rounded-sm bg-[#f2d9b6] border border-[#b45309] inline-block" /> Boş —
+                  tıkla, bilgi gir
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3.5 h-3.5 rounded-sm bg-stone-200 border border-stone-400 inline-block" /> Dolu —
+                  tıkla, detayı gör
+                </div>
+              </div>
+
+              <div className="bg-[#fdf8ef] border border-[#c9a97e] rounded-2xl shadow-sm p-3 md:p-5">
+                <RezervasyonKrokisi kayitlar={rezervasyonMap} onMasaTikla={handleMasaTiklaAdmin} tumuTiklanabilir />
+              </div>
             </div>
           </div>
         )}
