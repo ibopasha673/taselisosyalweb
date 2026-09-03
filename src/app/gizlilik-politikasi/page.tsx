@@ -16,12 +16,9 @@ const BOLUMLER = [
       <>
         <p>
           6698 sayılı Kişisel Verilerin Korunması Kanunu (&quot;KVKK&quot;) uyarınca kişisel verileriniz; veri
-          sorumlusu sıfatıyla <strong>Taşeli Sosyal Tesisleri</strong> (&quot;Tesis&quot;, &quot;biz&quot;)
-          tarafından, işbu aydınlatma metninde açıklanan amaç ve kapsamda işlenmektedir.
-        </p>
-        <p className="mt-3 rounded-lg border border-[#e3cda1] bg-[#f5ead8]/70 px-3.5 py-2.5 text-[13px] text-[#6b4226]">
-          Tesisin tam ticari unvanı, açık adresi ve vergi/MERSİS numarası bu bölüme eklenerek metin
-          tamamlanmalıdır — güncel bilgiler için işletme yetkilisine danışın.
+          sorumlusu sıfatıyla <strong>Taşeli Sosyal Tesisleri</strong> (&quot;Tesis&quot;, &quot;biz&quot;),
+          Sarıveliler / Karaman adresinde faaliyet gösteren işletmemiz tarafından, işbu aydınlatma metninde
+          açıklanan amaç ve kapsamda işlenmektedir.
         </p>
         <p className="mt-3">
           Bize aşağıdaki kanallardan ulaşabilirsiniz: WhatsApp{' '}
@@ -274,11 +271,6 @@ export default function GizlilikPolitikasiPage() {
               </div>
             ))}
           </div>
-
-          <p className="mt-8 text-center text-[11px] italic leading-relaxed text-stone-400">
-            Bu metin genel bilgilendirme amaçlıdır ve hukuki danışmanlık yerine geçmez; işletmenize tam uyum için
-            bir hukuk danışmanına başvurmanızı öneririz.
-          </p>
         </section>
       </div>
 
