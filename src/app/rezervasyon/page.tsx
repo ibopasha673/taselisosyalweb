@@ -12,6 +12,7 @@ import {
   MessageCircle,
   CalendarCheck,
   Users,
+  X,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { type MasaTanimi } from '@/lib/masalar'
@@ -245,191 +246,218 @@ export default function RezervasyonPage() {
         </section>
       </div>
 
-      {/* Seçilen masa onay kutusu */}
+      {/* Seçilen masa onay kutusu — mobilde tüm ekranı kaplar, sm ve üzerinde ortalanmış kutu */}
       {secilenMasa && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-4 py-6" onClick={kapat}>
+        <div
+          className="fixed inset-0 z-50 bg-black/50 overflow-y-auto sm:flex sm:items-center sm:justify-center sm:p-6"
+          onClick={kapat}
+        >
           <div
-            className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 border border-stone-200 max-h-[90vh] overflow-y-auto"
+            className="min-h-full w-full bg-[#fdf8ef] sm:min-h-0 sm:max-h-[90vh] sm:w-full sm:max-w-sm sm:overflow-y-auto sm:rounded-2xl sm:border sm:border-[#c9a97e] sm:shadow-2xl"
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-extrabold text-stone-800 mb-1">
-              {secilenKayit?.masa_adi ?? secilenMasa.kisaltma}
-            </h3>
-            <p className="text-xs font-mono text-stone-500 mb-3">{secilenMasa.kisaltma}</p>
-            {secilenKayit?.masanin_rezerve_olasiligi?.length ? (
-              <p className="flex items-center gap-1.5 text-sm text-stone-600 mb-4">
-                <Users className="w-4 h-4 text-amber-700" />
-                {Math.min(...secilenKayit.masanin_rezerve_olasiligi)}-
-                {Math.max(...secilenKayit.masanin_rezerve_olasiligi)} kişilik gruplar için uygun
-              </p>
-            ) : (
-              <p className="text-sm text-stone-500 mb-4">Kişi kapasitesi için bize WhatsApp&apos;tan sorabilirsin.</p>
-            )}
+            {/* Başlık şeridi */}
+            <div className="sticky top-0 z-10 flex items-start justify-between gap-3 bg-[#2c1810] px-5 py-4 sm:rounded-t-2xl">
+              <div>
+                <h3 className="text-lg font-extrabold leading-tight text-amber-100">
+                  {secilenKayit?.masa_adi ?? secilenMasa.kisaltma}
+                </h3>
+                <p className="mt-0.5 text-xs font-mono text-amber-200/60">{secilenMasa.kisaltma}</p>
+              </div>
+              <button
+                type="button"
+                onClick={kapat}
+                aria-label="Kapat"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-amber-200/80 transition-colors hover:bg-amber-900/40 hover:text-amber-100"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
 
-            {adim === 'form' && (
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-2">
+            <div className="p-5 sm:p-6">
+              {secilenKayit?.masanin_rezerve_olasiligi?.length ? (
+                <p className="mb-5 flex items-center gap-1.5 text-sm text-[#6b4226]">
+                  <Users className="h-4 w-4 text-amber-700" />
+                  {Math.min(...secilenKayit.masanin_rezerve_olasiligi)}-
+                  {Math.max(...secilenKayit.masanin_rezerve_olasiligi)} kişilik gruplar için uygun
+                </p>
+              ) : (
+                <p className="mb-5 text-sm text-[#8a6a4a]">Kişi kapasitesi için bize WhatsApp&apos;tan sorabilirsin.</p>
+              )}
+
+              {adim === 'form' && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-[#8a6a4a]">
+                        Tarih
+                      </label>
+                      <input
+                        type="date"
+                        min={bugun}
+                        value={form.tarih}
+                        onChange={(e) => setForm((f) => ({ ...f, tarih: e.target.value }))}
+                        className="w-full rounded-lg border border-[#d9c3a0] bg-white px-3 py-2.5 text-sm text-[#3b2216] focus:border-amber-600 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-[#8a6a4a]">
+                        Saat
+                      </label>
+                      <input
+                        type="time"
+                        value={form.saat}
+                        onChange={(e) => setForm((f) => ({ ...f, saat: e.target.value }))}
+                        className="w-full rounded-lg border border-[#d9c3a0] bg-white px-3 py-2.5 text-sm text-[#3b2216] focus:border-amber-600 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                  {form.tarih && (
+                    <p className="-mt-2 text-[11px] font-semibold text-amber-700">{gunHesapla(form.tarih)} günü için</p>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-[#8a6a4a]">
+                        Ad
+                      </label>
+                      <input
+                        type="text"
+                        value={form.isim}
+                        onChange={(e) => setForm((f) => ({ ...f, isim: e.target.value }))}
+                        placeholder="Adınız"
+                        className="w-full rounded-lg border border-[#d9c3a0] bg-white px-3 py-2.5 text-sm text-[#3b2216] placeholder-[#b79c7c] focus:border-amber-600 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-[#8a6a4a]">
+                        Soyad
+                      </label>
+                      <input
+                        type="text"
+                        value={form.soyisim}
+                        onChange={(e) => setForm((f) => ({ ...f, soyisim: e.target.value }))}
+                        placeholder="Soyadınız"
+                        className="w-full rounded-lg border border-[#d9c3a0] bg-white px-3 py-2.5 text-sm text-[#3b2216] placeholder-[#b79c7c] focus:border-amber-600 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500 mb-1">
-                      Tarih
+                    <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-[#8a6a4a]">
+                      Telefon
                     </label>
                     <input
-                      type="date"
-                      min={bugun}
-                      value={form.tarih}
-                      onChange={(e) => setForm((f) => ({ ...f, tarih: e.target.value }))}
-                      className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm text-stone-800 focus:outline-none focus:border-amber-600"
+                      type="tel"
+                      value={form.telefon}
+                      onChange={(e) => setForm((f) => ({ ...f, telefon: e.target.value }))}
+                      placeholder="05xx xxx xx xx"
+                      className="w-full rounded-lg border border-[#d9c3a0] bg-white px-3 py-2.5 text-sm text-[#3b2216] placeholder-[#b79c7c] focus:border-amber-600 focus:outline-none"
                     />
                   </div>
+
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500 mb-1">
-                      Saat
+                    <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-[#8a6a4a]">
+                      Kişi Sayısı
                     </label>
                     <input
-                      type="time"
-                      value={form.saat}
-                      onChange={(e) => setForm((f) => ({ ...f, saat: e.target.value }))}
-                      className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm text-stone-800 focus:outline-none focus:border-amber-600"
+                      type="number"
+                      min={1}
+                      value={form.kacKisi}
+                      onChange={(e) => setForm((f) => ({ ...f, kacKisi: e.target.value }))}
+                      placeholder="Örn: 4"
+                      className="w-full rounded-lg border border-[#d9c3a0] bg-white px-3 py-2.5 text-sm text-[#3b2216] placeholder-[#b79c7c] focus:border-amber-600 focus:outline-none"
                     />
                   </div>
-                </div>
-                {form.tarih && (
-                  <p className="text-[11px] font-semibold text-amber-700">{gunHesapla(form.tarih)} günü için</p>
-                )}
 
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500 mb-1">
-                      Ad
-                    </label>
-                    <input
-                      type="text"
-                      value={form.isim}
-                      onChange={(e) => setForm((f) => ({ ...f, isim: e.target.value }))}
-                      placeholder="Adınız"
-                      className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm text-stone-800 placeholder-stone-400 focus:outline-none focus:border-amber-600"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500 mb-1">
-                      Soyad
-                    </label>
-                    <input
-                      type="text"
-                      value={form.soyisim}
-                      onChange={(e) => setForm((f) => ({ ...f, soyisim: e.target.value }))}
-                      placeholder="Soyadınız"
-                      className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm text-stone-800 placeholder-stone-400 focus:outline-none focus:border-amber-600"
-                    />
+                  {hata && (
+                    <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+                      {hata}
+                    </p>
+                  )}
+
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={formuDogrulaVeIlerle}
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-amber-700 px-4 py-3 text-sm font-bold tracking-wide text-white shadow-sm transition-colors hover:bg-amber-600"
+                    >
+                      Devam Et
+                    </button>
+                    <button
+                      type="button"
+                      onClick={kapat}
+                      className="rounded-xl px-4 py-3 text-sm font-semibold text-[#8a6a4a] transition-colors hover:bg-[#f0e4cf]"
+                    >
+                      Vazgeç
+                    </button>
                   </div>
                 </div>
+              )}
 
-                <div>
-                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500 mb-1">
-                    Telefon
-                  </label>
-                  <input
-                    type="tel"
-                    value={form.telefon}
-                    onChange={(e) => setForm((f) => ({ ...f, telefon: e.target.value }))}
-                    placeholder="05xx xxx xx xx"
-                    className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm text-stone-800 placeholder-stone-400 focus:outline-none focus:border-amber-600"
-                  />
+              {adim === 'telefon-onay' && (
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-[#d9c3a0] bg-[#f5ead8] p-4 text-center">
+                    <p className="mb-1 text-xs text-[#8a6a4a]">Girdiğiniz telefon numarası</p>
+                    <p className="text-lg font-bold tracking-wide text-[#3b2216]">{form.telefon}</p>
+                  </div>
+                  <p className="text-center text-xs leading-relaxed text-[#6b4226]">
+                    Bu numara doğru mu? Rezervasyon talebiniz bu bilgilerle yönetime iletilecek.
+                  </p>
+                  {hata && (
+                    <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-center text-xs font-semibold text-red-700">
+                      {hata}
+                    </p>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={rezervasyonuGonder}
+                      disabled={gonderiliyor}
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold tracking-wide text-white shadow-sm transition-colors hover:bg-emerald-500 disabled:opacity-60"
+                    >
+                      {gonderiliyor ? 'Gönderiliyor...' : 'Evet, Rezervasyonu Gönder'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAdim('form')}
+                      className="rounded-xl px-4 py-3 text-sm font-semibold text-[#8a6a4a] transition-colors hover:bg-[#f0e4cf]"
+                    >
+                      Düzelt
+                    </button>
+                  </div>
                 </div>
+              )}
 
-                <div>
-                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500 mb-1">
-                    Kişi Sayısı
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={form.kacKisi}
-                    onChange={(e) => setForm((f) => ({ ...f, kacKisi: e.target.value }))}
-                    placeholder="Örn: 4"
-                    className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm text-stone-800 placeholder-stone-400 focus:outline-none focus:border-amber-600"
-                  />
-                </div>
-
-                {hata && <p className="text-xs font-semibold text-red-600">{hata}</p>}
-
-                <div className="flex gap-2 pt-1">
+              {adim === 'gonderildi' && secilenMasa && (
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-center">
+                    <p className="mb-1 text-sm font-bold text-emerald-800">Rezervasyonunuz gönderildi</p>
+                    <p className="text-xs leading-relaxed text-emerald-700">
+                      Rezervasyonunuz Taşeli Sosyal Tesisleri yönetimine gönderildi. Lütfen WhatsApp&apos;tan bizleri
+                      bilgilendirin.
+                    </p>
+                  </div>
                   <button
                     type="button"
-                    onClick={formuDogrulaVeIlerle}
-                    className="flex-1 inline-flex items-center justify-center gap-2 bg-amber-700 hover:bg-amber-600 text-white font-bold px-4 py-3 rounded-xl text-sm tracking-wide transition-colors"
+                    onClick={() => {
+                      whatsappaGit(secilenMasa)
+                      kapat()
+                    }}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold tracking-wide text-white shadow-sm transition-colors hover:bg-emerald-500"
                   >
-                    Devam Et
+                    <MessageCircle className="h-4 w-4" /> WhatsApp&apos;tan Bilgilendir
                   </button>
                   <button
                     type="button"
                     onClick={kapat}
-                    className="px-4 py-3 rounded-xl text-sm font-semibold text-stone-500 hover:bg-stone-100 transition-colors"
+                    className="w-full py-1 text-center text-xs text-[#8a6a4a] transition-colors hover:text-[#3b2216]"
                   >
-                    Vazgeç
+                    Kapat
                   </button>
                 </div>
-              </div>
-            )}
-
-            {adim === 'telefon-onay' && (
-              <div className="space-y-4">
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
-                  <p className="text-xs text-stone-500 mb-1">Girdiğiniz telefon numarası</p>
-                  <p className="text-lg font-bold text-stone-800 tracking-wide">{form.telefon}</p>
-                </div>
-                <p className="text-xs text-stone-600 text-center leading-relaxed">
-                  Bu numara doğru mu? Rezervasyon talebiniz bu bilgilerle yönetime iletilecek.
-                </p>
-                {hata && <p className="text-xs font-semibold text-red-600 text-center">{hata}</p>}
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={rezervasyonuGonder}
-                    disabled={gonderiliyor}
-                    className="flex-1 inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-3 rounded-xl text-sm tracking-wide transition-colors disabled:opacity-60"
-                  >
-                    {gonderiliyor ? 'Gönderiliyor...' : 'Evet, Rezervasyonu Gönder'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAdim('form')}
-                    className="px-4 py-3 rounded-xl text-sm font-semibold text-stone-500 hover:bg-stone-100 transition-colors"
-                  >
-                    Düzelt
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {adim === 'gonderildi' && secilenMasa && (
-              <div className="space-y-4">
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
-                  <p className="text-sm font-bold text-emerald-800 mb-1">Rezervasyonunuz gönderildi</p>
-                  <p className="text-xs text-emerald-700 leading-relaxed">
-                    Rezervasyonunuz Taşeli Sosyal Tesisleri yönetimine gönderildi. Lütfen WhatsApp&apos;tan bizleri
-                    bilgilendirin.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    whatsappaGit(secilenMasa)
-                    kapat()
-                  }}
-                  className="w-full inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-3 rounded-xl text-sm tracking-wide transition-colors"
-                >
-                  <MessageCircle className="w-4 h-4" /> WhatsApp&apos;tan Bilgilendir
-                </button>
-                <button
-                  type="button"
-                  onClick={kapat}
-                  className="w-full text-center text-xs text-stone-500 hover:text-stone-700 py-1 transition-colors"
-                >
-                  Kapat
-                </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       )}
