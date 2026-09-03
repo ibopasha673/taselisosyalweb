@@ -551,6 +551,40 @@ export default function AdminDashboard() {
     fetchRezervasyonlar()
   }
 
+  // Formdaki bilgileri hiç girmeden, tek tuşla masayı direkt dolu/kapalı işaretler
+  // (örn. bilgi alınmadan yürütülen bir grup ya da bakım için masayı bloke etmek gibi).
+  const handleSadeceKapat = async () => {
+    if (!editingRezervasyonKisaltma) return
+    setRezSubmitting(true)
+
+    const { data, error } = await supabase
+      .from('rezervasyon')
+      .update({
+        durum: true,
+        rezervasyon_tarihi: null,
+        rezervasyon_saati: null,
+        rezervasyon_tarihi_gunu: null,
+        isim: null,
+        soyisim: null,
+        telefon_numarasi: null,
+        kac_kisi: null,
+      })
+      .eq('masa_kisaltmasi', editingRezervasyonKisaltma)
+      .select()
+
+    setRezSubmitting(false)
+    if (error || !data || data.length === 0) {
+      alert(
+        error
+          ? 'Masa kapatılamadı: ' + error.message
+          : 'Masa kapatılamadı — değişiklik veritabanına yansımadı. Muhtemelen oturumun süresi dolmuş ya da Supabase\'teki yetki (RLS) politikası eksik.'
+      )
+      return
+    }
+    setEditingRezervasyonKisaltma(null)
+    fetchRezervasyonlar()
+  }
+
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/admin/login')
@@ -1398,6 +1432,19 @@ export default function AdminDashboard() {
                       {secilenMasaKayit?.durum ? 'Vazgeç' : 'İptal'}
                     </button>
                   </div>
+
+                  {/* Bilgi girmeden, tek tuşla masayı kapat — sadece boş bir masa dolduruluyorken
+                      gösterilir (zaten dolu bir masa düzenlenirken anlamsız). */}
+                  {!secilenMasaKayit?.durum && (
+                    <button
+                      type="button"
+                      onClick={handleSadeceKapat}
+                      disabled={rezSubmitting}
+                      className="w-full border border-amber-800/50 text-amber-300 hover:bg-amber-900/30 font-bold py-2.5 rounded-xl text-xs tracking-wider transition-all disabled:opacity-55"
+                    >
+                      Bilgi Girmeden Sadece Masayı Kapat
+                    </button>
+                  )}
                 </form>
               )}
             </div>
