@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Search, Menu as MenuIcon, Phone, Info, Home, ChevronRight, MessageCircle } from 'lucide-react'
+import { Search, Menu as MenuIcon, Phone, Info, Home, ChevronRight, MessageCircle, CalendarCheck } from 'lucide-react'
 
 // lucide-react bu projede marka/logo ikonlarını (Instagram, Facebook) içermiyor,
 // bu yüzden bağımsız, sade birer SVG olarak tanımlıyoruz.
@@ -235,6 +235,9 @@ export default function HomePage() {
               </Link>
               <Link href="/hakkimizda" className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-amber-900/40 text-stone-300 hover:text-amber-100 transition-colors">
                 <Info className="w-4 h-4 text-amber-500" /> HAKKIMIZDA
+              </Link>
+              <Link href="/rezervasyon" className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-amber-900/40 text-stone-300 hover:text-amber-100 transition-colors">
+                <CalendarCheck className="w-4 h-4 text-amber-500" /> REZERVASYON
               </Link>
               <Link href="#iletisim" className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-amber-900/40 text-stone-300 hover:text-amber-100 transition-colors">
                 <Phone className="w-4 h-4 text-amber-500" /> İLETİŞİM

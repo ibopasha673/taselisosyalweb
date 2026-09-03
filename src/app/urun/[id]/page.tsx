@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Search, Menu as MenuIcon, Phone, Info, Home, MessageCircle, ArrowLeft } from 'lucide-react'
+import { Search, Menu as MenuIcon, Phone, Info, Home, MessageCircle, ArrowLeft, CalendarCheck } from 'lucide-react'
 
 type UrunItem = {
   id: string
@@ -89,6 +89,9 @@ export default function UrunDetayPage() {
               </Link>
               <Link href="/hakkimizda" className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-amber-900/40 text-stone-300 hover:text-amber-100 transition-colors">
                 <Info className="w-4 h-4 text-amber-500" /> HAKKIMIZDA
+              </Link>
+              <Link href="/rezervasyon" className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-amber-900/40 text-stone-300 hover:text-amber-100 transition-colors">
+                <CalendarCheck className="w-4 h-4 text-amber-500" /> REZERVASYON
               </Link>
               <Link href="/#iletisim" className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-amber-900/40 text-stone-300 hover:text-amber-100 transition-colors">
                 <Phone className="w-4 h-4 text-amber-500" /> İLETİŞİM
