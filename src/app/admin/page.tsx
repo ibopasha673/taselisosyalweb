@@ -452,9 +452,21 @@ export default function AdminDashboard() {
           kac_kisi: null,
         }
 
-    const { error } = await supabase.from('rezervasyon').update(guncelleme).eq('masa_kisaltmasi', rez.masa_kisaltmasi)
-    if (error) {
-      alert('Masa durumu güncellenemedi: ' + error.message)
+    // .select() ekliyoruz ki güncellemenin GERÇEKTEN bir satıra uygulandığını görebilelim.
+    // Supabase/PostgREST, RLS (Row Level Security) bir satırı gizlediğinde de hata
+    // DÖNDÜRMEZ — sessizce 0 satır günceller. .select() olmadan bunu fark edemeyiz ve
+    // admin "kaydetti" sanır ama veritabanı hiç değişmemiş olur.
+    const { data, error } = await supabase
+      .from('rezervasyon')
+      .update(guncelleme)
+      .eq('masa_kisaltmasi', rez.masa_kisaltmasi)
+      .select()
+    if (error || !data || data.length === 0) {
+      alert(
+        error
+          ? 'Masa durumu güncellenemedi: ' + error.message
+          : 'Masa durumu güncellenemedi — değişiklik veritabanına yansımadı. Muhtemelen oturumun süresi dolmuş ya da Supabase\'teki yetki (RLS) politikası eksik. Çıkış yapıp tekrar giriş yapmayı dene, sorun devam ederse "rezervasyon_detay_kolonlari.sql" dosyasındaki UPDATE politikasının Supabase\'te çalıştırıldığından emin ol.'
+      )
       setRezervasyonlar((prev) =>
         prev.map((r) => (r.masa_kisaltmasi === rez.masa_kisaltmasi ? { ...r, durum: rez.durum } : r))
       )
@@ -511,7 +523,7 @@ export default function AdminDashboard() {
     if (!editingRezervasyonKisaltma) return
     setRezSubmitting(true)
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('rezervasyon')
       .update({
         durum: rezDurum,
@@ -524,10 +536,15 @@ export default function AdminDashboard() {
         kac_kisi: rezKacKisi ? Number(rezKacKisi) : null,
       })
       .eq('masa_kisaltmasi', editingRezervasyonKisaltma)
+      .select()
 
     setRezSubmitting(false)
-    if (error) {
-      alert('Rezervasyon bilgisi kaydedilemedi: ' + error.message)
+    if (error || !data || data.length === 0) {
+      alert(
+        error
+          ? 'Rezervasyon bilgisi kaydedilemedi: ' + error.message
+          : 'Rezervasyon bilgisi kaydedilemedi — değişiklik veritabanına yansımadı. Muhtemelen oturumun süresi dolmuş ya da Supabase\'teki yetki (RLS) politikası eksik. Çıkış yapıp tekrar giriş yapmayı dene, sorun devam ederse "rezervasyon_detay_kolonlari.sql" dosyasındaki UPDATE politikasının Supabase\'te çalıştırıldığından emin ol.'
+      )
       return
     }
     setEditingRezervasyonKisaltma(null)

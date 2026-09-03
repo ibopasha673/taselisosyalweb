@@ -121,11 +121,30 @@ export function RezervasyonTalepleri() {
   }
 
   async function aktifEt(talep: Talep) {
+    // WhatsApp sekmesini İLK İŞ olarak (henüz hiçbir "await" geçmeden) boş açıyoruz.
+    // Tarayıcılar (özellikle mobilde) bir tıklama olayının SENKRON akışının dışında
+    // çağrılan window.open()'ı popup engelleyici ile sessizce durdurur — updateten
+    // sonra açmaya çalışsaydık (bir "await" geçtiği için) mesaj hiç çıkmayabilirdi.
+    // Sekmeyi burada rezerve edip, adres bilgisini asıl kayıt işlemi bittikten
+    // sonra dolduruyoruz.
+    const waPencere = window.open('', '_blank')
     setIslemYapiliyor(talep.id)
 
-    const { error } = await supabase.from('mevcut_rezervasyonlar').update({ durum: true }).eq('id', talep.id)
-    if (error) {
-      alert('Rezervasyon aktif edilemedi: ' + error.message)
+    // .select() ekliyoruz ki güncellemenin GERÇEKTEN bir satıra uygulandığını
+    // görebilelim — RLS bir satırı gizlediğinde hata dönmez, sessizce 0 satır
+    // günceller.
+    const { data, error } = await supabase
+      .from('mevcut_rezervasyonlar')
+      .update({ durum: true })
+      .eq('id', talep.id)
+      .select()
+    if (error || !data || data.length === 0) {
+      waPencere?.close()
+      alert(
+        error
+          ? 'Rezervasyon aktif edilemedi: ' + error.message
+          : 'Rezervasyon aktif edilemedi — değişiklik veritabanına yansımadı. Muhtemelen oturumun süresi dolmuş ya da Supabase\'teki yetki (RLS) politikası eksik.'
+      )
       setIslemYapiliyor(null)
       return
     }
@@ -144,7 +163,9 @@ export function RezervasyonTalepleri() {
       '',
       'Sizi ağırlamaktan mutluluk duyarız. - Taşeli Sosyal Tesisleri',
     ].join('\n')
-    window.open(`https://wa.me/${waNumarasi(talep.telefon_numarasi)}?text=${encodeURIComponent(mesaj)}`, '_blank')
+    const waUrl = `https://wa.me/${waNumarasi(talep.telefon_numarasi)}?text=${encodeURIComponent(mesaj)}`
+    if (waPencere) waPencere.location.href = waUrl
+    else window.open(waUrl, '_blank') // önceden açma engellendiyse son bir deneme
 
     setIslemYapiliyor(null)
     await fetchTalepler()
@@ -158,11 +179,19 @@ export function RezervasyonTalepleri() {
       return
     }
 
+    // Aynı popup-engelleyici gerekçesiyle WhatsApp sekmesini senkron olarak,
+    // "await"ten önce boş açıyoruz (bkz. aktifEt'teki açıklama).
+    const waPencere = window.open('', '_blank')
     setIslemYapiliyor(talep.id)
 
-    const { error } = await supabase.from('mevcut_rezervasyonlar').delete().eq('id', talep.id)
-    if (error) {
-      alert('Rezervasyon silinemedi: ' + error.message)
+    const { data, error } = await supabase.from('mevcut_rezervasyonlar').delete().eq('id', talep.id).select()
+    if (error || !data || data.length === 0) {
+      waPencere?.close()
+      alert(
+        error
+          ? 'Rezervasyon silinemedi: ' + error.message
+          : 'Rezervasyon silinemedi — değişiklik veritabanına yansımadı. Muhtemelen oturumun süresi dolmuş ya da Supabase\'teki yetki (RLS) politikası eksik.'
+      )
       setIslemYapiliyor(null)
       return
     }
@@ -180,7 +209,9 @@ export function RezervasyonTalepleri() {
       '',
       'Farklı bir tarih ya da masa için tekrar deneyebilir veya bizi arayabilirsiniz. - Taşeli Sosyal Tesisleri',
     ].join('\n')
-    window.open(`https://wa.me/${waNumarasi(talep.telefon_numarasi)}?text=${encodeURIComponent(mesaj)}`, '_blank')
+    const waUrl = `https://wa.me/${waNumarasi(talep.telefon_numarasi)}?text=${encodeURIComponent(mesaj)}`
+    if (waPencere) waPencere.location.href = waUrl
+    else window.open(waUrl, '_blank')
 
     setIslemYapiliyor(null)
     setSilmeModuId(null)
