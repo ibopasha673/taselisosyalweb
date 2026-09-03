@@ -1156,7 +1156,7 @@ export default function AdminDashboard() {
 
         {activeTab === 'rezervasyon' && (
           <div className="space-y-6">
-            <RezervasyonTalepleri onMasaDurumuDegisti={fetchRezervasyonlar} />
+            <RezervasyonTalepleri />
 
             <div className="bg-[#3b2216] border border-amber-900/40 p-6 rounded-2xl shadow-xl">
               <div className="flex items-center gap-2 mb-4 border-b border-amber-900/40 pb-3 text-amber-200 font-bold text-sm">

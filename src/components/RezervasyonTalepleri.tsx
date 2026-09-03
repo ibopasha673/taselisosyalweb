@@ -75,13 +75,10 @@ function kalanSureMetni(tarih: string, saat: string): string {
   return parcalar.join(' ') + ' kaldı'
 }
 
-type RezervasyonTalepleriProps = {
-  // Bir talep aktif edilince/silinince "rezervasyon" tablosu (masa durumu) da
-  // değişebiliyor — kroki'yi gösteren üst bileşen bunu yenilemek isterse.
-  onMasaDurumuDegisti?: () => void
-}
-
-export function RezervasyonTalepleri({ onMasaDurumuDegisti }: RezervasyonTalepleriProps) {
+// Not: bu bileşen krokideki masa durumuna (aşağıdaki "rezervasyon" tablosu)
+// artık dokunmuyor — aktif etmek/silmek sadece bu talep kuyruğunu değiştirir,
+// masayı dolu/boş işaretlemek admin'in kendi tercihine bırakılıyor.
+export function RezervasyonTalepleri() {
   const [talepler, setTalepler] = useState<Talep[]>([])
   const [yukleniyor, setYukleniyor] = useState(true)
   const [tabloYok, setTabloYok] = useState(false)
@@ -133,21 +130,10 @@ export function RezervasyonTalepleri({ onMasaDurumuDegisti }: RezervasyonTaleple
       return
     }
 
-    if (talep.masa_uuid) {
-      await supabase
-        .from('rezervasyon')
-        .update({
-          durum: true,
-          isim: talep.isim,
-          soyisim: talep.soyisim,
-          telefon_numarasi: talep.telefon_numarasi,
-          kac_kisi: talep.kac_kisi,
-          rezervasyon_tarihi: talep.rezervasyon_tarihi,
-          rezervasyon_saati: talep.rezervasyon_saati,
-          rezervasyon_tarihi_gunu: talep.rezervasyon_tarihi_gunu,
-        })
-        .eq('id', talep.masa_uuid)
-    }
+    // Not: aktif etmek krokideki masayı OTOMATİK dolu işaretlemiyor — masa
+    // durumu (aşağıdaki "MASA REZERVASYON DURUMU" bölümü) tamamen admin'in
+    // kendi kontrolünde kalıyor, isterse dolu işaretler isterse işaretlemez.
+    // Aktif rezervasyon burada sadece "AKTİF REZERVASYONLAR" listesine düşer.
 
     const mesaj = [
       `Merhaba ${[talep.isim, talep.soyisim].filter(Boolean).join(' ')},`,
@@ -162,7 +148,6 @@ export function RezervasyonTalepleri({ onMasaDurumuDegisti }: RezervasyonTaleple
 
     setIslemYapiliyor(null)
     await fetchTalepler()
-    onMasaDurumuDegisti?.()
   }
 
   async function talebiSil(talep: Talep) {
@@ -174,7 +159,6 @@ export function RezervasyonTalepleri({ onMasaDurumuDegisti }: RezervasyonTaleple
     }
 
     setIslemYapiliyor(talep.id)
-    const aktifti = talep.durum
 
     const { error } = await supabase.from('mevcut_rezervasyonlar').delete().eq('id', talep.id)
     if (error) {
@@ -183,21 +167,8 @@ export function RezervasyonTalepleri({ onMasaDurumuDegisti }: RezervasyonTaleple
       return
     }
 
-    if (aktifti && talep.masa_uuid) {
-      await supabase
-        .from('rezervasyon')
-        .update({
-          durum: false,
-          rezervasyon_tarihi: null,
-          rezervasyon_saati: null,
-          rezervasyon_tarihi_gunu: null,
-          isim: null,
-          soyisim: null,
-          telefon_numarasi: null,
-          kac_kisi: null,
-        })
-        .eq('id', talep.masa_uuid)
-    }
+    // Not: burada da krokideki masa durumuna dokunmuyoruz — o tamamen
+    // admin'in kendi kontrolünde.
 
     const mesaj = [
       `Merhaba ${[talep.isim, talep.soyisim].filter(Boolean).join(' ')},`,
@@ -214,7 +185,6 @@ export function RezervasyonTalepleri({ onMasaDurumuDegisti }: RezervasyonTaleple
     setIslemYapiliyor(null)
     setSilmeModuId(null)
     await fetchTalepler()
-    if (aktifti) onMasaDurumuDegisti?.()
   }
 
   const bekleyenler = talepler.filter((t) => !t.durum)
