@@ -4,23 +4,7 @@
 'use client'
 
 import { MASA_DIZILIMI, type MasaTanimi } from '@/lib/masalar'
-
-// Telefonda kroki küçük göründüğü için ziyaretçi genelde parmakla yakınlaştırıp
-// (pinch-zoom) masaya öyle dokunuyor. Mobil tarayıcılarda pinch-zoom, fixed
-// pozisyonlu panelleri de aynı oranda büyütüp kırpıyor — panel açılınca bu
-// yakınlaştırmadan kurtarmak için viewport meta etiketini anlık olarak
-// "user-scalable=no" yapıp tarayıcıyı 1x ölçeğe döndürüyoruz, sonra eski haline
-// (tekrar parmakla yakınlaştırılabilir şekilde) geri alıyoruz.
-function ekranYakinlastirmasiniSifirla() {
-  if (typeof document === 'undefined') return
-  const viewport = document.querySelector('meta[name="viewport"]')
-  if (!viewport) return
-  const onceki = viewport.getAttribute('content') ?? 'width=device-width, initial-scale=1'
-  viewport.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no')
-  window.setTimeout(() => {
-    viewport.setAttribute('content', onceki)
-  }, 350)
-}
+import { ekranYakinlastirmasiniSifirla } from '@/lib/ekranYakinlastirma'
 
 export type RezervasyonKaydi = {
   id: string

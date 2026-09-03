@@ -17,6 +17,7 @@ import {
 import { supabase } from '@/lib/supabase'
 import { type MasaTanimi } from '@/lib/masalar'
 import { RezervasyonKrokisi, type RezervasyonKaydi } from '@/components/RezervasyonKrokisi'
+import { ekranYakinlastirmasiniSifirla } from '@/lib/ekranYakinlastirma'
 
 type RezervasyonForm = {
   tarih: string
@@ -297,7 +298,8 @@ export default function RezervasyonPage() {
                         min={bugun}
                         value={form.tarih}
                         onChange={(e) => setForm((f) => ({ ...f, tarih: e.target.value }))}
-                        className="w-full rounded-lg border border-[#d9c3a0] bg-white px-3 py-2.5 text-sm text-[#3b2216] focus:border-amber-600 focus:outline-none"
+                        onFocus={ekranYakinlastirmasiniSifirla}
+                        className="w-full rounded-lg border border-[#d9c3a0] bg-white px-3 py-2.5 text-base text-[#3b2216] focus:border-amber-600 focus:outline-none"
                       />
                     </div>
                     <div>
@@ -308,7 +310,8 @@ export default function RezervasyonPage() {
                         type="time"
                         value={form.saat}
                         onChange={(e) => setForm((f) => ({ ...f, saat: e.target.value }))}
-                        className="w-full rounded-lg border border-[#d9c3a0] bg-white px-3 py-2.5 text-sm text-[#3b2216] focus:border-amber-600 focus:outline-none"
+                        onFocus={ekranYakinlastirmasiniSifirla}
+                        className="w-full rounded-lg border border-[#d9c3a0] bg-white px-3 py-2.5 text-base text-[#3b2216] focus:border-amber-600 focus:outline-none"
                       />
                     </div>
                   </div>
@@ -325,8 +328,9 @@ export default function RezervasyonPage() {
                         type="text"
                         value={form.isim}
                         onChange={(e) => setForm((f) => ({ ...f, isim: e.target.value }))}
+                        onFocus={ekranYakinlastirmasiniSifirla}
                         placeholder="Adınız"
-                        className="w-full rounded-lg border border-[#d9c3a0] bg-white px-3 py-2.5 text-sm text-[#3b2216] placeholder-[#b79c7c] focus:border-amber-600 focus:outline-none"
+                        className="w-full rounded-lg border border-[#d9c3a0] bg-white px-3 py-2.5 text-base text-[#3b2216] placeholder-[#b79c7c] focus:border-amber-600 focus:outline-none"
                       />
                     </div>
                     <div>
@@ -337,8 +341,9 @@ export default function RezervasyonPage() {
                         type="text"
                         value={form.soyisim}
                         onChange={(e) => setForm((f) => ({ ...f, soyisim: e.target.value }))}
+                        onFocus={ekranYakinlastirmasiniSifirla}
                         placeholder="Soyadınız"
-                        className="w-full rounded-lg border border-[#d9c3a0] bg-white px-3 py-2.5 text-sm text-[#3b2216] placeholder-[#b79c7c] focus:border-amber-600 focus:outline-none"
+                        className="w-full rounded-lg border border-[#d9c3a0] bg-white px-3 py-2.5 text-base text-[#3b2216] placeholder-[#b79c7c] focus:border-amber-600 focus:outline-none"
                       />
                     </div>
                   </div>
@@ -351,8 +356,9 @@ export default function RezervasyonPage() {
                       type="tel"
                       value={form.telefon}
                       onChange={(e) => setForm((f) => ({ ...f, telefon: e.target.value }))}
+                      onFocus={ekranYakinlastirmasiniSifirla}
                       placeholder="05xx xxx xx xx"
-                      className="w-full rounded-lg border border-[#d9c3a0] bg-white px-3 py-2.5 text-sm text-[#3b2216] placeholder-[#b79c7c] focus:border-amber-600 focus:outline-none"
+                      className="w-full rounded-lg border border-[#d9c3a0] bg-white px-3 py-2.5 text-base text-[#3b2216] placeholder-[#b79c7c] focus:border-amber-600 focus:outline-none"
                     />
                   </div>
 
@@ -365,8 +371,9 @@ export default function RezervasyonPage() {
                       min={1}
                       value={form.kacKisi}
                       onChange={(e) => setForm((f) => ({ ...f, kacKisi: e.target.value }))}
+                      onFocus={ekranYakinlastirmasiniSifirla}
                       placeholder="Örn: 4"
-                      className="w-full rounded-lg border border-[#d9c3a0] bg-white px-3 py-2.5 text-sm text-[#3b2216] placeholder-[#b79c7c] focus:border-amber-600 focus:outline-none"
+                      className="w-full rounded-lg border border-[#d9c3a0] bg-white px-3 py-2.5 text-base text-[#3b2216] placeholder-[#b79c7c] focus:border-amber-600 focus:outline-none"
                     />
                   </div>
 
