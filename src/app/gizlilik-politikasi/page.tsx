@@ -102,8 +102,8 @@ const BOLUMLER = [
       <>
         <p>
           Rezervasyon verileriniz, rezervasyon tarihinizden itibaren <strong className="text-[#3b2216]">en fazla
-          1 (bir) yıl</strong> süreyle bulut veritabanımızda (Supabase) saklanır. Bu sürenin sonunda verileriniz
-          silinir ya da geri döndürülemez şekilde anonim hale getirilir.
+          1 (bir) yıl</strong> süreyle güvenli bir veritabanında saklanır. Bu sürenin sonunda verileriniz silinir
+          ya da geri döndürülemez şekilde anonim hale getirilir.
         </p>
         <p className="mt-3">
           Aramızda bir uyuşmazlık bulunması veya kanunen daha uzun süre saklama zorunluluğu doğması hâlinde bu
@@ -118,10 +118,10 @@ const BOLUMLER = [
     icerik: (
       <ul className="space-y-2 text-[#4a3520]">
         <li>Rezervasyon işlemlerini yürüten, yalnızca yetkilendirilmiş yönetici hesabıyla erişebilen tesis personeli</li>
-        <li>Verilerin barındırıldığı bulut altyapı sağlayıcısı (Supabase) — veri işleyen sıfatıyla, teknik altyapı hizmeti kapsamında</li>
+        <li>Verilerinizin güvenli şekilde barındırılmasını sağlayan teknik altyapı hizmet sağlayıcımız — veri işleyen sıfatıyla, yalnızca teknik altyapı hizmeti kapsamında</li>
         <li>
           &quot;WhatsApp&apos;tan Bilgilendir&quot; butonuna bastığınızda kendi tercihinizle ilettiğiniz mesaj
-          içeriği için WhatsApp (Meta Platforms Inc.)
+          içeriği için WhatsApp
         </li>
         <li>Yasal olarak yetkili kamu kurum ve kuruluşları, yalnızca kanunen zorunlu hâllerde</li>
       </ul>
@@ -132,7 +132,7 @@ const BOLUMLER = [
     baslik: 'Veri Güvenliği',
     icerik: (
       <ul className="space-y-2 text-[#4a3520]">
-        <li>Rezervasyon verileri, satır bazlı erişim politikaları (RLS) ile korunan bir veritabanında saklanır</li>
+        <li>Rezervasyon verileri, erişim yetkileri sıkı şekilde sınırlandırılmış bir veritabanında saklanır</li>
         <li>Verilerinizi yalnızca kimlik doğrulamasından geçmiş, yetkilendirilmiş yönetici hesabı görüntüleyip düzenleyebilir</li>
         <li>Site trafiği uçtan uca HTTPS ile şifrelenir</li>
       </ul>

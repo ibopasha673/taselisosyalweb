@@ -159,8 +159,8 @@ export default function RezervasyonPage() {
       return
     }
     const telefonRakam = form.telefon.replace(/\D/g, '')
-    if (telefonRakam.length < 10) {
-      setHata('Geçerli bir telefon numarası girin.')
+    if (telefonRakam.length !== 11 || !telefonRakam.startsWith('0')) {
+      setHata('Telefon numaranızı başında 0 olacak şekilde, 11 hane olarak girin. Örn: 05xx xxx xx xx')
       return
     }
     if (!kvkkOnay) {
