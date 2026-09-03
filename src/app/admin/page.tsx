@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation'
 import { ShieldCheck, LogOut, Plus, Trash2, Edit3, Image as ImageIcon, Home, ListOrdered, Utensils, Star, Search, CalendarCheck, Phone } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { type MasaTanimi } from '@/lib/masalar'
+import { RezervasyonKrokisi, type RezervasyonKaydi } from '@/components/RezervasyonKrokisi'
 
 type SliderItem = {
   id: string
@@ -35,22 +37,6 @@ type UrunItem = {
   fiyat: number | null
 }
 
-type RezervasyonItem = {
-  id: string
-  masa_kisaltmasi: string
-  masa_adi: string
-  masanin_rezerve_olasiligi: number[] | null
-  durum: boolean
-  created_time: string
-  rezervasyon_tarihi: string | null
-  rezervasyon_saati: string | null
-  rezervasyon_tarihi_gunu: string | null
-  isim: string | null
-  soyisim: string | null
-  telefon_numarasi: string | null
-  kac_kisi: number | null
-}
-
 // Pazar günü JS'te 0 olduğu için dizi Pazar'dan başlıyor; getDay() index'iyle birebir eşleşsin diye.
 const REZ_GUNLER = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi']
 function rezGunHesapla(tarih: string): string {
@@ -65,7 +51,7 @@ export default function AdminDashboard() {
   const [sliders, setSliders] = useState<SliderItem[]>([])
   const [kategoriler, setKategoriler] = useState<KategoriItem[]>([])
   const [urunler, setUrunler] = useState<UrunItem[]>([])
-  const [rezervasyonlar, setRezervasyonlar] = useState<RezervasyonItem[]>([])
+  const [rezervasyonlar, setRezervasyonlar] = useState<RezervasyonKaydi[]>([])
   const [loading, setLoading] = useState(true)
   // Yetki kontrolü tamamlanana kadar true kalır; admin içeriği bu bitmeden asla gösterilmez
   const [checkingAuth, setCheckingAuth] = useState(true)
@@ -111,7 +97,8 @@ export default function AdminDashboard() {
   const [rezKacKisi, setRezKacKisi] = useState('')
   const [rezDurum, setRezDurum] = useState(false)
   const [rezSubmitting, setRezSubmitting] = useState(false)
-  const [rezAramaQuery, setRezAramaQuery] = useState('')
+  // Kroki üzerinde tıklanan masa (rezervasyon yönetimi modalını açar)
+  const [secilenMasaAdmin, setSecilenMasaAdmin] = useState<MasaTanimi | null>(null)
 
   const [submitting, setSubmitting] = useState(false)
   const router = useRouter()
@@ -445,7 +432,7 @@ export default function AdminDashboard() {
 
   // WhatsApp'tan gelen rezervasyon talebini işlerken masayı hızlıca dolu/boş yap
   // (detayları düzenlemeye gerek kalmadan). Masa boşaltılırken rezervasyon detayları da temizlenir.
-  const handleHizliDurumDegistir = async (rez: RezervasyonItem) => {
+  const handleHizliDurumDegistir = async (rez: RezervasyonKaydi) => {
     const yeniDurum = !rez.durum
     setRezervasyonlar((prev) =>
       prev.map((r) => (r.masa_kisaltmasi === rez.masa_kisaltmasi ? { ...r, durum: yeniDurum } : r))
@@ -475,19 +462,47 @@ export default function AdminDashboard() {
     fetchRezervasyonlar()
   }
 
-  const handleEditRezervasyon = (rez: RezervasyonItem) => {
-    setEditingRezervasyonKisaltma(rez.masa_kisaltmasi)
-    setRezTarih(rez.rezervasyon_tarihi ?? '')
-    setRezSaat(rez.rezervasyon_saati ?? '')
-    setRezIsim(rez.isim ?? '')
-    setRezSoyisim(rez.soyisim ?? '')
-    setRezTelefon(rez.telefon_numarasi ?? '')
-    setRezKacKisi(rez.kac_kisi != null ? String(rez.kac_kisi) : '')
-    setRezDurum(rez.durum)
+  // Formu bir kayıttan (varsa) doldurup düzenleme moduna geçirir. defaultDurum, kayıt
+  // hiç yoksa veya boşsa (yeni rezervasyon giriliyorsa) DOLU kutucuğunun başlangıç değeri.
+  const openRezervasyonForm = (kayit: RezervasyonKaydi | undefined, kisaltma: string, defaultDurum: boolean) => {
+    setEditingRezervasyonKisaltma(kisaltma)
+    setRezTarih(kayit?.rezervasyon_tarihi ?? '')
+    setRezSaat(kayit?.rezervasyon_saati ?? '')
+    setRezIsim(kayit?.isim ?? '')
+    setRezSoyisim(kayit?.soyisim ?? '')
+    setRezTelefon(kayit?.telefon_numarasi ?? '')
+    setRezKacKisi(kayit?.kac_kisi != null ? String(kayit.kac_kisi) : '')
+    setRezDurum(kayit ? kayit.durum : defaultDurum)
+  }
+
+  const handleEditRezervasyon = (rez: RezervasyonKaydi) => {
+    openRezervasyonForm(rez, rez.masa_kisaltmasi, rez.durum)
   }
 
   const handleCancelRezervasyonEdit = () => {
     setEditingRezervasyonKisaltma(null)
+  }
+
+  // Kroki üzerinde bir masaya tıklanınca: masa doluysa doğrudan detay görünümü açılır
+  // (form kapalı kalır), boşsa doğrudan doldurma formu açılır (DOLU kutucuğu işaretli başlar).
+  const handleMasaTiklaAdmin = (tanim: MasaTanimi) => {
+    setSecilenMasaAdmin(tanim)
+    const kayit = rezervasyonMap[tanim.kisaltma]
+    if (kayit?.durum) {
+      setEditingRezervasyonKisaltma(null)
+    } else {
+      openRezervasyonForm(kayit, tanim.kisaltma, true)
+    }
+  }
+
+  const kapatAdminModal = () => {
+    setSecilenMasaAdmin(null)
+    setEditingRezervasyonKisaltma(null)
+  }
+
+  const handleBosaltVeKapat = async (rez: RezervasyonKaydi) => {
+    await handleHizliDurumDegistir(rez)
+    kapatAdminModal()
   }
 
   const handleRezervasyonSubmit = async (e: React.FormEvent) => {
@@ -523,15 +538,11 @@ export default function AdminDashboard() {
     router.push('/admin/login')
   }
 
-  // Masa kısaltması, masa adı, isim/soyisim veya telefona göre arama (Türkçe karakter duyarlı)
-  const normalizedRezArama = rezAramaQuery.trim().toLocaleLowerCase('tr-TR')
-  const gosterilecekRezervasyonlar = normalizedRezArama
-    ? rezervasyonlar.filter((r) =>
-        [r.masa_kisaltmasi, r.masa_adi, r.isim, r.soyisim, r.telefon_numarasi]
-          .filter(Boolean)
-          .some((deger) => (deger as string).toLocaleLowerCase('tr-TR').includes(normalizedRezArama))
-      )
-    : rezervasyonlar
+  // Kroki bileşeni masa kısaltmasına göre anahtarlanmış bir kayıt haritası bekliyor
+  const rezervasyonMap: Record<string, RezervasyonKaydi> = Object.fromEntries(
+    rezervasyonlar.map((r) => [r.masa_kisaltmasi, r])
+  )
+  const secilenMasaKayit = secilenMasaAdmin ? rezervasyonMap[secilenMasaAdmin.kisaltma] : undefined
 
   // Ürün ismi veya kategori ismine göre arama (Türkçe karakter duyarlı)
   const normalizedUrunArama = urunAramaQuery.trim().toLocaleLowerCase('tr-TR')
@@ -1146,224 +1157,225 @@ export default function AdminDashboard() {
           <div className="bg-[#3b2216] border border-amber-900/40 p-6 rounded-2xl shadow-xl">
             <div className="flex items-center gap-2 mb-4 border-b border-amber-900/40 pb-3 text-amber-200 font-bold text-sm">
               <CalendarCheck className="w-5 h-5 text-amber-500" />
-              <span>MASA REZERVASYON DURUMU ({rezervasyonlar.length})</span>
+              <span>MASA REZERVASYON DURUMU</span>
             </div>
 
             <p className="text-xs text-stone-400 mb-4 leading-relaxed">
-              Rezervasyon talepleri WhatsApp&apos;a düşer. Mesajı okuyup masayı burada dolu işaretle ve
-              istersen isim, telefon, tarih/saat gibi detayları da gir — site anında bu bilgiye göre güncellenir.
+              Rezervasyon talepleri WhatsApp&apos;a düşer. Mesajı okuyup krokiden masaya tıkla: boş bir masaya
+              tıklayınca doğrudan bilgileri girip dolu işaretleyebilirsin; dolu bir masaya tıklayınca daha önce
+              girilen rezervasyon bilgileri karşına çıkar. Site anında bu bilgiye göre güncellenir.
             </p>
 
-            <div className="relative mb-4">
-              <input
-                type="text"
-                value={rezAramaQuery}
-                onChange={(e) => setRezAramaQuery(e.target.value)}
-                placeholder="Masa, isim veya telefona göre ara..."
-                className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl pl-9 pr-4 py-2.5 text-sm text-stone-100 placeholder-stone-500 focus:outline-none focus:border-amber-600"
-              />
-              <Search className="absolute left-3 top-3 w-4 h-4 text-stone-500" />
+            {rezervasyonlar.length === 0 && (
+              <div className="mb-4 bg-amber-950/40 border border-amber-800/50 text-amber-200 text-xs rounded-lg px-4 py-3">
+                Henüz masa bulunamadı. <code className="font-mono">rezervasyon</code> tablosunun Supabase&apos;te
+                oluşturulduğundan emin ol.
+              </div>
+            )}
+
+            {/* Lejant */}
+            <div className="flex flex-wrap items-center gap-4 mb-4 text-xs text-stone-300">
+              <div className="flex items-center gap-1.5">
+                <span className="w-3.5 h-3.5 rounded-sm bg-[#f2d9b6] border border-[#b45309] inline-block" /> Boş —
+                tıkla, bilgi gir
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3.5 h-3.5 rounded-sm bg-stone-200 border border-stone-400 inline-block" /> Dolu —
+                tıkla, detayı gör
+              </div>
             </div>
 
-            <div className="space-y-3">
-              {rezervasyonlar.length === 0 ? (
-                <p className="text-xs text-stone-400 text-center py-8">
-                  Henüz masa bulunamadı. <code className="font-mono">rezervasyon</code> tablosunun Supabase&apos;te
-                  oluşturulduğundan emin ol.
+            <div className="bg-[#fdf8ef] border border-[#c9a97e] rounded-2xl shadow-sm p-3 md:p-5">
+              <RezervasyonKrokisi kayitlar={rezervasyonMap} onMasaTikla={handleMasaTiklaAdmin} tumuTiklanabilir />
+            </div>
+          </div>
+        )}
+
+        {/* Rezervasyon yönetim modalı: kroki üzerinden masaya tıklayınca açılır */}
+        {secilenMasaAdmin && (
+          <div
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-4 py-6"
+            onClick={kapatAdminModal}
+          >
+            <div
+              className="bg-[#2c1810] border border-amber-900/40 rounded-2xl shadow-2xl max-w-sm w-full p-6 max-h-[90vh] overflow-y-auto text-stone-100"
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-extrabold text-amber-100 mb-1">
+                {secilenMasaKayit?.masa_adi ?? secilenMasaAdmin.kisaltma}
+              </h3>
+              <p className="text-xs font-mono text-stone-400 mb-3">{secilenMasaAdmin.kisaltma}</p>
+              {secilenMasaKayit?.masanin_rezerve_olasiligi?.length ? (
+                <p className="text-xs text-stone-400 mb-4">
+                  {Math.min(...secilenMasaKayit.masanin_rezerve_olasiligi)}-
+                  {Math.max(...secilenMasaKayit.masanin_rezerve_olasiligi)} kişilik gruplar için uygun
                 </p>
-              ) : gosterilecekRezervasyonlar.length === 0 ? (
-                <p className="text-xs text-stone-400 text-center py-8">Aramanızla eşleşen masa bulunamadı.</p>
-              ) : (
-                gosterilecekRezervasyonlar.map((rez) => (
-                  <div
-                    key={rez.masa_kisaltmasi}
-                    className={`p-4 rounded-xl border shadow-inner ${
-                      rez.durum ? 'bg-red-950/20 border-red-700/40' : 'bg-[#2c1810] border-amber-900/40'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-3 flex-wrap">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[10px] font-mono bg-amber-800/40 text-amber-300 px-2 py-0.5 rounded-full font-semibold">
-                            {rez.masa_kisaltmasi}
-                          </span>
-                          <span
-                            className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                              rez.durum ? 'bg-red-700 text-white' : 'bg-emerald-700 text-white'
-                            }`}
-                          >
-                            {rez.durum ? 'DOLU' : 'BOŞ'}
-                          </span>
-                          {rez.masanin_rezerve_olasiligi?.length ? (
-                            <span className="text-[10px] text-stone-400">
-                              {Math.min(...rez.masanin_rezerve_olasiligi)}-{Math.max(...rez.masanin_rezerve_olasiligi)} kişilik
-                            </span>
-                          ) : null}
-                        </div>
-                        <h4 className="font-bold text-amber-100 text-sm mt-1 break-words">{rez.masa_adi}</h4>
-                        {rez.durum && (rez.isim || rez.telefon_numarasi || rez.rezervasyon_tarihi) && (
-                          <div className="text-xs text-stone-400 mt-1 space-y-0.5">
-                            {(rez.isim || rez.soyisim) && (
-                              <p>
-                                {[rez.isim, rez.soyisim].filter(Boolean).join(' ')}
-                                {rez.kac_kisi ? ` · ${rez.kac_kisi} kişi` : ''}
-                              </p>
-                            )}
-                            {rez.telefon_numarasi && (
-                              <p className="flex items-center gap-1.5">
-                                <Phone className="w-3 h-3 text-amber-500" /> {rez.telefon_numarasi}
-                              </p>
-                            )}
-                            {rez.rezervasyon_tarihi && (
-                              <p>
-                                {new Date(rez.rezervasyon_tarihi + 'T00:00:00').toLocaleDateString('tr-TR')}
-                                {rez.rezervasyon_tarihi_gunu ? ` (${rez.rezervasyon_tarihi_gunu})` : ''}
-                                {rez.rezervasyon_saati ? ` · ${rez.rezervasyon_saati}` : ''}
-                              </p>
-                            )}
-                          </div>
-                        )}
-                      </div>
+              ) : null}
 
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <button
-                          onClick={() => handleHizliDurumDegistir(rez)}
-                          className={`px-3 py-2 rounded-lg text-[11px] font-bold transition-colors border ${
-                            rez.durum
-                              ? 'bg-emerald-700 hover:bg-emerald-600 text-white border-emerald-500/50'
-                              : 'bg-red-900/60 hover:bg-red-800 text-red-200 border-red-700/50'
-                          }`}
-                          title={rez.durum ? 'Masayı boşalt' : 'Masayı dolu işaretle'}
-                        >
-                          {rez.durum ? 'BOŞALT' : 'DOLU İŞARETLE'}
-                        </button>
-                        <button
-                          onClick={() =>
-                            editingRezervasyonKisaltma === rez.masa_kisaltmasi
-                              ? handleCancelRezervasyonEdit()
-                              : handleEditRezervasyon(rez)
-                          }
-                          className="p-2 bg-amber-700/40 hover:bg-amber-700 text-amber-200 rounded-lg transition-colors border border-amber-600/30"
-                          title="Detayları düzenle"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {editingRezervasyonKisaltma === rez.masa_kisaltmasi && (
-                      <form onSubmit={handleRezervasyonSubmit} className="mt-4 pt-4 border-t border-amber-900/40 space-y-3">
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-300 mb-1">
-                              Tarih
-                            </label>
-                            <input
-                              type="date"
-                              value={rezTarih}
-                              onChange={(e) => setRezTarih(e.target.value)}
-                              className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none focus:border-amber-600"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-300 mb-1">
-                              Saat
-                            </label>
-                            <input
-                              type="time"
-                              value={rezSaat}
-                              onChange={(e) => setRezSaat(e.target.value)}
-                              className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none focus:border-amber-600"
-                            />
-                          </div>
-                        </div>
-                        {rezTarih && (
-                          <p className="text-[11px] font-semibold text-amber-400">
-                            {rezGunHesapla(rezTarih)} günü olarak kaydedilecek
-                          </p>
-                        )}
-
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-300 mb-1">
-                              Ad
-                            </label>
-                            <input
-                              type="text"
-                              value={rezIsim}
-                              onChange={(e) => setRezIsim(e.target.value)}
-                              className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none focus:border-amber-600"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-300 mb-1">
-                              Soyad
-                            </label>
-                            <input
-                              type="text"
-                              value={rezSoyisim}
-                              onChange={(e) => setRezSoyisim(e.target.value)}
-                              className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none focus:border-amber-600"
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-300 mb-1">
-                            Telefon
-                          </label>
-                          <input
-                            type="tel"
-                            value={rezTelefon}
-                            onChange={(e) => setRezTelefon(e.target.value)}
-                            placeholder="05xx xxx xx xx"
-                            className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl px-3 py-2 text-sm text-stone-100 placeholder-stone-500 focus:outline-none focus:border-amber-600"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-300 mb-1">
-                            Kişi Sayısı
-                          </label>
-                          <input
-                            type="number"
-                            min={1}
-                            value={rezKacKisi}
-                            onChange={(e) => setRezKacKisi(e.target.value)}
-                            className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none focus:border-amber-600"
-                          />
-                        </div>
-
-                        <label className="flex items-center gap-2 text-xs font-semibold text-stone-300 cursor-pointer bg-[#1e100a] border border-amber-900/50 rounded-xl px-4 py-2.5">
-                          <input
-                            type="checkbox"
-                            checked={rezDurum}
-                            onChange={(e) => setRezDurum(e.target.checked)}
-                            className="w-4 h-4 accent-amber-600 rounded bg-[#1e100a] border-amber-900"
-                          />
-                          MASA DOLU (rezervasyon aktif)
-                        </label>
-
-                        <div className="flex gap-2 pt-1">
-                          <button
-                            type="submit"
-                            disabled={rezSubmitting}
-                            className="flex-1 bg-amber-700 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl text-xs tracking-wider transition-all shadow-lg disabled:opacity-55"
-                          >
-                            {rezSubmitting ? 'KAYDEDİLİYOR...' : 'KAYDET'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleCancelRezervasyonEdit}
-                            className="bg-stone-700 hover:bg-stone-600 text-stone-200 px-4 py-2.5 rounded-xl text-xs font-bold"
-                          >
-                            İPTAL
-                          </button>
-                        </div>
-                      </form>
+              {/* DETAY GÖRÜNÜMÜ: masa dolu ve düzenleme formu açık değilse — girilmiş rezervasyon bilgilerini gösterir */}
+              {secilenMasaKayit?.durum && editingRezervasyonKisaltma !== secilenMasaAdmin.kisaltma && (
+                <div className="space-y-4">
+                  <div className="bg-red-950/30 border border-red-700/40 rounded-xl p-4 space-y-1.5 text-sm">
+                    <p className="font-bold text-red-200 text-xs tracking-wider mb-1">DOLU</p>
+                    {(secilenMasaKayit.isim || secilenMasaKayit.soyisim) && (
+                      <p className="text-stone-200">
+                        {[secilenMasaKayit.isim, secilenMasaKayit.soyisim].filter(Boolean).join(' ')}
+                        {secilenMasaKayit.kac_kisi ? ` · ${secilenMasaKayit.kac_kisi} kişi` : ''}
+                      </p>
+                    )}
+                    {secilenMasaKayit.telefon_numarasi && (
+                      <p className="flex items-center gap-1.5 text-stone-300">
+                        <Phone className="w-3.5 h-3.5 text-amber-500" /> {secilenMasaKayit.telefon_numarasi}
+                      </p>
+                    )}
+                    {secilenMasaKayit.rezervasyon_tarihi && (
+                      <p className="text-stone-300">
+                        {new Date(secilenMasaKayit.rezervasyon_tarihi + 'T00:00:00').toLocaleDateString('tr-TR')}
+                        {secilenMasaKayit.rezervasyon_tarihi_gunu ? ` (${secilenMasaKayit.rezervasyon_tarihi_gunu})` : ''}
+                        {secilenMasaKayit.rezervasyon_saati ? ` · ${secilenMasaKayit.rezervasyon_saati}` : ''}
+                      </p>
+                    )}
+                    {!secilenMasaKayit.isim && !secilenMasaKayit.telefon_numarasi && !secilenMasaKayit.rezervasyon_tarihi && (
+                      <p className="text-stone-400 text-xs">Detay girilmemiş — sadece dolu işaretlenmiş.</p>
                     )}
                   </div>
-                ))
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleEditRezervasyon(secilenMasaKayit)}
+                      className="flex-1 bg-amber-700 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl text-xs tracking-wider transition-all"
+                    >
+                      Düzenle
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleBosaltVeKapat(secilenMasaKayit)}
+                      className="flex-1 bg-red-900/60 hover:bg-red-800 text-red-200 font-bold py-2.5 rounded-xl text-xs tracking-wider transition-all border border-red-800/50"
+                    >
+                      Masayı Boşalt
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={kapatAdminModal}
+                    className="w-full text-center text-xs text-stone-400 hover:text-stone-200 py-1 transition-colors"
+                  >
+                    Kapat
+                  </button>
+                </div>
+              )}
+
+              {/* FORM GÖRÜNÜMÜ: masa boşsa doğrudan, doluysa "Düzenle"ye basılınca açılır */}
+              {(!secilenMasaKayit?.durum || editingRezervasyonKisaltma === secilenMasaAdmin.kisaltma) && (
+                <form onSubmit={handleRezervasyonSubmit} className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-300 mb-1">
+                        Tarih
+                      </label>
+                      <input
+                        type="date"
+                        value={rezTarih}
+                        onChange={(e) => setRezTarih(e.target.value)}
+                        className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none focus:border-amber-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-300 mb-1">
+                        Saat
+                      </label>
+                      <input
+                        type="time"
+                        value={rezSaat}
+                        onChange={(e) => setRezSaat(e.target.value)}
+                        className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none focus:border-amber-600"
+                      />
+                    </div>
+                  </div>
+                  {rezTarih && (
+                    <p className="text-[11px] font-semibold text-amber-400">
+                      {rezGunHesapla(rezTarih)} günü olarak kaydedilecek
+                    </p>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-300 mb-1">
+                        Ad
+                      </label>
+                      <input
+                        type="text"
+                        value={rezIsim}
+                        onChange={(e) => setRezIsim(e.target.value)}
+                        className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none focus:border-amber-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-300 mb-1">
+                        Soyad
+                      </label>
+                      <input
+                        type="text"
+                        value={rezSoyisim}
+                        onChange={(e) => setRezSoyisim(e.target.value)}
+                        className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none focus:border-amber-600"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-300 mb-1">
+                      Telefon
+                    </label>
+                    <input
+                      type="tel"
+                      value={rezTelefon}
+                      onChange={(e) => setRezTelefon(e.target.value)}
+                      placeholder="05xx xxx xx xx"
+                      className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl px-3 py-2 text-sm text-stone-100 placeholder-stone-500 focus:outline-none focus:border-amber-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-300 mb-1">
+                      Kişi Sayısı
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={rezKacKisi}
+                      onChange={(e) => setRezKacKisi(e.target.value)}
+                      className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none focus:border-amber-600"
+                    />
+                  </div>
+
+                  <label className="flex items-center gap-2 text-xs font-semibold text-stone-300 cursor-pointer bg-[#1e100a] border border-amber-900/50 rounded-xl px-4 py-2.5">
+                    <input
+                      type="checkbox"
+                      checked={rezDurum}
+                      onChange={(e) => setRezDurum(e.target.checked)}
+                      className="w-4 h-4 accent-amber-600 rounded bg-[#1e100a] border-amber-900"
+                    />
+                    MASA DOLU (rezervasyon aktif)
+                  </label>
+
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      type="submit"
+                      disabled={rezSubmitting}
+                      className="flex-1 bg-amber-700 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl text-xs tracking-wider transition-all shadow-lg disabled:opacity-55"
+                    >
+                      {rezSubmitting ? 'KAYDEDİLİYOR...' : secilenMasaKayit?.durum ? 'GÜNCELLE' : 'DOLU OLARAK KAYDET'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={secilenMasaKayit?.durum ? handleCancelRezervasyonEdit : kapatAdminModal}
+                      className="bg-stone-700 hover:bg-stone-600 text-stone-200 px-4 py-2.5 rounded-xl text-xs font-bold"
+                    >
+                      {secilenMasaKayit?.durum ? 'Vazgeç' : 'İptal'}
+                    </button>
+                  </div>
+                </form>
               )}
             </div>
           </div>
