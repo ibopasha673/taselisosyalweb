@@ -496,9 +496,14 @@ export default function HomePage() {
       <footer className="bg-[#1c0f0a] text-stone-400 py-8 border-t border-amber-950 text-xs">
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
           <p>© 2026 Taşeli Sosyal Tesisleri - Sarıveliler. Tüm hakları saklıdır.</p>
-          <Link href="/admin/login" className="text-stone-600 hover:text-stone-400 transition-colors tracking-widest text-[10px]">
-            • YÖNETİM
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/gizlilik-politikasi" className="text-stone-500 hover:text-stone-300 transition-colors tracking-wide">
+              KVKK Aydınlatma Metni ve Gizlilik Politikası
+            </Link>
+            <Link href="/admin/login" className="text-stone-600 hover:text-stone-400 transition-colors tracking-widest text-[10px]">
+              • YÖNETİM
+            </Link>
+          </div>
         </div>
       </footer>
     </div>

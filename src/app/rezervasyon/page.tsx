@@ -49,6 +49,7 @@ export default function RezervasyonPage() {
   const [adim, setAdim] = useState<'form' | 'telefon-onay' | 'gonderildi'>('form')
   const [hata, setHata] = useState('')
   const [gonderiliyor, setGonderiliyor] = useState(false)
+  const [kvkkOnay, setKvkkOnay] = useState(false)
   const bugun = new Date().toISOString().slice(0, 10)
 
   useEffect(() => {
@@ -109,6 +110,10 @@ export default function RezervasyonPage() {
         rezervasyon_saati: form.saat,
         rezervasyon_tarihi_gunu: gunHesapla(form.tarih),
         durum: false,
+        // KVKK Aydınlatma Metni ve Gizlilik Politikası onay kaydı — ne zaman onayladığı
+        // ile birlikte tutuluyor ki gerektiğinde ispat edilebilsin.
+        kvkk_onay: kvkkOnay,
+        kvkk_onay_tarihi: kvkkOnay ? new Date().toISOString() : null,
       },
     ])
     setGonderiliyor(false)
@@ -125,6 +130,7 @@ export default function RezervasyonPage() {
     setForm(BOS_FORM)
     setAdim('form')
     setHata('')
+    setKvkkOnay(false)
   }
 
   function kapat() {
@@ -132,6 +138,7 @@ export default function RezervasyonPage() {
     setForm(BOS_FORM)
     setAdim('form')
     setHata('')
+    setKvkkOnay(false)
   }
 
   function formuDogrulaVeIlerle() {
@@ -154,6 +161,10 @@ export default function RezervasyonPage() {
     const telefonRakam = form.telefon.replace(/\D/g, '')
     if (telefonRakam.length < 10) {
       setHata('Geçerli bir telefon numarası girin.')
+      return
+    }
+    if (!kvkkOnay) {
+      setHata("Devam etmek için KVKK Aydınlatma Metni ve Gizlilik Politikası'nı onaylamanız gerekiyor.")
       return
     }
     setHata('')
@@ -377,6 +388,27 @@ export default function RezervasyonPage() {
                     />
                   </div>
 
+                  <label className="flex items-start gap-2.5 rounded-lg border border-[#d9c3a0] bg-[#f5ead8]/60 px-3 py-2.5 text-xs leading-relaxed text-[#5c4530] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={kvkkOnay}
+                      onChange={(e) => setKvkkOnay(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-amber-700"
+                    />
+                    <span>
+                      <Link
+                        href="/gizlilik-politikasi"
+                        target="_blank"
+                        onClick={(e) => e.stopPropagation()}
+                        className="font-semibold text-amber-800 underline hover:text-amber-900"
+                      >
+                        KVKK Aydınlatma Metni ve Gizlilik Politikası
+                      </Link>
+                      &apos;nı okudum, kişisel verilerimin rezervasyon işlemleri kapsamında işlenmesini kabul
+                      ediyorum.
+                    </span>
+                  </label>
+
                   {hata && (
                     <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
                       {hata}
@@ -472,9 +504,14 @@ export default function RezervasyonPage() {
       <footer className="bg-[#1c0f0a] text-stone-400 py-8 border-t border-amber-950 text-xs">
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
           <p>© 2026 Taşeli Sosyal Tesisleri - Sarıveliler. Tüm hakları saklıdır.</p>
-          <Link href="/admin/login" className="text-stone-600 hover:text-stone-400 transition-colors tracking-widest text-[10px]">
-            • YÖNETİM
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/gizlilik-politikasi" className="text-stone-500 hover:text-stone-300 transition-colors tracking-wide">
+              KVKK Aydınlatma Metni ve Gizlilik Politikası
+            </Link>
+            <Link href="/admin/login" className="text-stone-600 hover:text-stone-400 transition-colors tracking-widest text-[10px]">
+              • YÖNETİM
+            </Link>
+          </div>
         </div>
       </footer>
     </div>
