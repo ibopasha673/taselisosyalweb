@@ -48,11 +48,11 @@ export const MASA_DIZILIMI: MasaTanimi[] = [
   { kisaltma: 'S14', cx: 491, cy: 204, tip: { tur: 'iki-ew' } },
   { kisaltma: 'S13', cx: 597, cy: 204, tip: { tur: 'iki-ew' } },
   { kisaltma: 'S12', cx: 703, cy: 204, tip: { tur: 'iki-ew' } },
-  // --- Salon: çiçekliğin güneyinde (üstünde) ---
-  { kisaltma: 'S9', cx: 488, cy: 290, tip: { tur: 'dortlu-ns' } },
-  { kisaltma: 'S8', cx: 560, cy: 290, tip: { tur: 'dortlu-ns' } },
-  { kisaltma: 'S7', cx: 624, cy: 290, tip: { tur: 'dortlu-ns' } },
-  { kisaltma: 'S6', cx: 688, cy: 290, tip: { tur: 'dortlu-ns' } },
+  // --- Salon: çiçekliğin güneyinde (üstünde), soldan sağa S6, S7, S8, S9 ---
+  { kisaltma: 'S6', cx: 488, cy: 290, tip: { tur: 'dortlu-ns' } },
+  { kisaltma: 'S7', cx: 560, cy: 290, tip: { tur: 'dortlu-ns' } },
+  { kisaltma: 'S8', cx: 624, cy: 290, tip: { tur: 'dortlu-ns' } },
+  { kisaltma: 'S9', cx: 688, cy: 290, tip: { tur: 'dortlu-ns' } },
   // --- Salon: sağ duvar boyunca ---
   { kisaltma: 'S11', cx: 858, cy: 245, tip: { tur: 'altili-ew' } },
   { kisaltma: 'L2', cx: 846, cy: 395, tip: { tur: 'yuvarlak-bench', kenar: 'E' } },
