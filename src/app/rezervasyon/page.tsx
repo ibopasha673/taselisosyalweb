@@ -25,6 +25,27 @@ type RezervasyonKaydi = {
   created_time: string
 }
 
+type RezervasyonForm = {
+  tarih: string
+  saat: string
+  isim: string
+  soyisim: string
+  telefon: string
+  kacKisi: string
+}
+
+const BOS_FORM: RezervasyonForm = { tarih: '', saat: '', isim: '', soyisim: '', telefon: '', kacKisi: '' }
+
+// Pazar günü JS'te 0 olduğu için dizi Pazar'dan başlıyor; getDay() index'iyle birebir eşleşsin diye.
+const GUNLER = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi']
+
+function gunHesapla(tarih: string): string {
+  if (!tarih) return ''
+  const d = new Date(tarih + 'T00:00:00')
+  if (Number.isNaN(d.getTime())) return ''
+  return GUNLER[d.getDay()]
+}
+
 // --- Kroki çizim sabitleri: build ölçeği (SCALE=1.12) krokiyle birebir aynı kalsın diye
 // buradaki tüm rakamlar orijinal Python üretecinden birebir aktarıldı. ---
 const KARE_BOYUT = 30 * 1.12
@@ -352,6 +373,10 @@ export default function RezervasyonPage() {
   const [kayitlar, setKayitlar] = useState<Record<string, RezervasyonKaydi>>({})
   const [tabloYok, setTabloYok] = useState(false)
   const [secilenMasa, setSecilenMasa] = useState<MasaTanimi | null>(null)
+  const [form, setForm] = useState<RezervasyonForm>(BOS_FORM)
+  const [adim, setAdim] = useState<'form' | 'telefon-onay'>('form')
+  const [hata, setHata] = useState('')
+  const bugun = new Date().toISOString().slice(0, 10)
 
   useEffect(() => {
     async function fetchRezervasyon() {
@@ -372,8 +397,58 @@ export default function RezervasyonPage() {
   function whatsappaGit(tanim: MasaTanimi) {
     const kayit = kayitlar[tanim.kisaltma]
     const masaAdi = kayit?.masa_adi ?? tanim.kisaltma
-    const mesaj = `Merhaba, ${masaAdi} (${tanim.kisaltma}) için rezervasyon yapmak istiyorum.`
+    const gun = gunHesapla(form.tarih)
+    const tarihGosterim = form.tarih ? new Date(form.tarih + 'T00:00:00').toLocaleDateString('tr-TR') : ''
+    const mesaj = [
+      `Merhaba, ${masaAdi} (${tanim.kisaltma}) için rezervasyon yapmak istiyorum.`,
+      '',
+      `Ad Soyad: ${form.isim} ${form.soyisim}`,
+      `Telefon: ${form.telefon}`,
+      `Kişi Sayısı: ${form.kacKisi}`,
+      `Tarih: ${tarihGosterim}${gun ? ` (${gun})` : ''}`,
+      `Saat: ${form.saat}`,
+    ].join('\n')
     window.open(`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}?text=${encodeURIComponent(mesaj)}`, '_blank')
+  }
+
+  function masaSec(tanim: MasaTanimi) {
+    setSecilenMasa(tanim)
+    setForm(BOS_FORM)
+    setAdim('form')
+    setHata('')
+  }
+
+  function kapat() {
+    setSecilenMasa(null)
+    setForm(BOS_FORM)
+    setAdim('form')
+    setHata('')
+  }
+
+  function formuDogrulaVeIlerle() {
+    if (!form.tarih || !form.saat || !form.isim.trim() || !form.soyisim.trim() || !form.telefon.trim() || !form.kacKisi) {
+      setHata('Lütfen tüm alanları doldurun.')
+      return
+    }
+    const kisi = Number(form.kacKisi)
+    if (!Number.isInteger(kisi) || kisi < 1) {
+      setHata('Geçerli bir kişi sayısı girin.')
+      return
+    }
+    const olasilik = secilenKayit?.masanin_rezerve_olasiligi
+    if (olasilik && olasilik.length && !olasilik.includes(kisi)) {
+      setHata(
+        `Bu masa ${Math.min(...olasilik)}-${Math.max(...olasilik)} kişilik gruplar için uygun. Girdiğiniz kişi sayısı bu aralığın dışında.`
+      )
+      return
+    }
+    const telefonRakam = form.telefon.replace(/\D/g, '')
+    if (telefonRakam.length < 10) {
+      setHata('Geçerli bir telefon numarası girin.')
+      return
+    }
+    setHata('')
+    setAdim('telefon-onay')
   }
 
   const secilenKayit = secilenMasa ? kayitlar[secilenMasa.kisaltma] : undefined
@@ -556,7 +631,7 @@ export default function RezervasyonPage() {
                   key={tanim.kisaltma}
                   tanim={tanim}
                   kayit={kayitlar[tanim.kisaltma]}
-                  onClick={() => setSecilenMasa(tanim)}
+                  onClick={() => masaSec(tanim)}
                 />
               ))}
             </svg>
@@ -566,9 +641,9 @@ export default function RezervasyonPage() {
 
       {/* Seçilen masa onay kutusu */}
       {secilenMasa && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-4 py-6" onClick={() => setSecilenMasa(null)}>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-4 py-6" onClick={kapat}>
           <div
-            className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 border border-stone-200"
+            className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 border border-stone-200 max-h-[90vh] overflow-y-auto"
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
             <h3 className="text-lg font-extrabold text-stone-800 mb-1">
@@ -584,25 +659,143 @@ export default function RezervasyonPage() {
             ) : (
               <p className="text-sm text-stone-500 mb-4">Kişi kapasitesi için bize WhatsApp&apos;tan sorabilirsin.</p>
             )}
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  whatsappaGit(secilenMasa)
-                  setSecilenMasa(null)
-                }}
-                className="flex-1 inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-3 rounded-xl text-sm tracking-wide transition-colors"
-              >
-                <MessageCircle className="w-4 h-4" /> WhatsApp&apos;tan Rezerve Et
-              </button>
-              <button
-                type="button"
-                onClick={() => setSecilenMasa(null)}
-                className="px-4 py-3 rounded-xl text-sm font-semibold text-stone-500 hover:bg-stone-100 transition-colors"
-              >
-                Vazgeç
-              </button>
-            </div>
+
+            {adim === 'form' && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500 mb-1">
+                      Tarih
+                    </label>
+                    <input
+                      type="date"
+                      min={bugun}
+                      value={form.tarih}
+                      onChange={(e) => setForm((f) => ({ ...f, tarih: e.target.value }))}
+                      className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm text-stone-800 focus:outline-none focus:border-amber-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500 mb-1">
+                      Saat
+                    </label>
+                    <input
+                      type="time"
+                      value={form.saat}
+                      onChange={(e) => setForm((f) => ({ ...f, saat: e.target.value }))}
+                      className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm text-stone-800 focus:outline-none focus:border-amber-600"
+                    />
+                  </div>
+                </div>
+                {form.tarih && (
+                  <p className="text-[11px] font-semibold text-amber-700">{gunHesapla(form.tarih)} günü için</p>
+                )}
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500 mb-1">
+                      Ad
+                    </label>
+                    <input
+                      type="text"
+                      value={form.isim}
+                      onChange={(e) => setForm((f) => ({ ...f, isim: e.target.value }))}
+                      placeholder="Adınız"
+                      className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm text-stone-800 placeholder-stone-400 focus:outline-none focus:border-amber-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500 mb-1">
+                      Soyad
+                    </label>
+                    <input
+                      type="text"
+                      value={form.soyisim}
+                      onChange={(e) => setForm((f) => ({ ...f, soyisim: e.target.value }))}
+                      placeholder="Soyadınız"
+                      className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm text-stone-800 placeholder-stone-400 focus:outline-none focus:border-amber-600"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500 mb-1">
+                    Telefon
+                  </label>
+                  <input
+                    type="tel"
+                    value={form.telefon}
+                    onChange={(e) => setForm((f) => ({ ...f, telefon: e.target.value }))}
+                    placeholder="05xx xxx xx xx"
+                    className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm text-stone-800 placeholder-stone-400 focus:outline-none focus:border-amber-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-500 mb-1">
+                    Kişi Sayısı
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={form.kacKisi}
+                    onChange={(e) => setForm((f) => ({ ...f, kacKisi: e.target.value }))}
+                    placeholder="Örn: 4"
+                    className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm text-stone-800 placeholder-stone-400 focus:outline-none focus:border-amber-600"
+                  />
+                </div>
+
+                {hata && <p className="text-xs font-semibold text-red-600">{hata}</p>}
+
+                <div className="flex gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={formuDogrulaVeIlerle}
+                    className="flex-1 inline-flex items-center justify-center gap-2 bg-amber-700 hover:bg-amber-600 text-white font-bold px-4 py-3 rounded-xl text-sm tracking-wide transition-colors"
+                  >
+                    Devam Et
+                  </button>
+                  <button
+                    type="button"
+                    onClick={kapat}
+                    className="px-4 py-3 rounded-xl text-sm font-semibold text-stone-500 hover:bg-stone-100 transition-colors"
+                  >
+                    Vazgeç
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {adim === 'telefon-onay' && (
+              <div className="space-y-4">
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
+                  <p className="text-xs text-stone-500 mb-1">Girdiğiniz telefon numarası</p>
+                  <p className="text-lg font-bold text-stone-800 tracking-wide">{form.telefon}</p>
+                </div>
+                <p className="text-xs text-stone-600 text-center leading-relaxed">
+                  Bu numara doğru mu? Rezervasyon talebiniz WhatsApp&apos;tan bu bilgilerle iletilecek.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      whatsappaGit(secilenMasa)
+                      kapat()
+                    }}
+                    className="flex-1 inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-3 rounded-xl text-sm tracking-wide transition-colors"
+                  >
+                    <MessageCircle className="w-4 h-4" /> Evet, WhatsApp&apos;tan Gönder
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAdim('form')}
+                    className="px-4 py-3 rounded-xl text-sm font-semibold text-stone-500 hover:bg-stone-100 transition-colors"
+                  >
+                    Düzelt
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

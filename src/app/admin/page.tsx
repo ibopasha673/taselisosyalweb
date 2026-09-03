@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { ShieldCheck, LogOut, Plus, Trash2, Edit3, Image as ImageIcon, Home, ListOrdered, Utensils, Star, Search } from 'lucide-react'
+import { ShieldCheck, LogOut, Plus, Trash2, Edit3, Image as ImageIcon, Home, ListOrdered, Utensils, Star, Search, CalendarCheck, Phone } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -35,11 +35,37 @@ type UrunItem = {
   fiyat: number | null
 }
 
+type RezervasyonItem = {
+  id: string
+  masa_kisaltmasi: string
+  masa_adi: string
+  masanin_rezerve_olasiligi: number[] | null
+  durum: boolean
+  created_time: string
+  rezervasyon_tarihi: string | null
+  rezervasyon_saati: string | null
+  rezervasyon_tarihi_gunu: string | null
+  isim: string | null
+  soyisim: string | null
+  telefon_numarasi: string | null
+  kac_kisi: number | null
+}
+
+// Pazar günü JS'te 0 olduğu için dizi Pazar'dan başlıyor; getDay() index'iyle birebir eşleşsin diye.
+const REZ_GUNLER = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi']
+function rezGunHesapla(tarih: string): string {
+  if (!tarih) return ''
+  const d = new Date(tarih + 'T00:00:00')
+  if (Number.isNaN(d.getTime())) return ''
+  return REZ_GUNLER[d.getDay()]
+}
+
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'slider' | 'kategori' | 'urun'>('slider')
+  const [activeTab, setActiveTab] = useState<'slider' | 'kategori' | 'urun' | 'rezervasyon'>('slider')
   const [sliders, setSliders] = useState<SliderItem[]>([])
   const [kategoriler, setKategoriler] = useState<KategoriItem[]>([])
   const [urunler, setUrunler] = useState<UrunItem[]>([])
+  const [rezervasyonlar, setRezervasyonlar] = useState<RezervasyonItem[]>([])
   const [loading, setLoading] = useState(true)
   // Yetki kontrolü tamamlanana kadar true kalır; admin içeriği bu bitmeden asla gösterilmez
   const [checkingAuth, setCheckingAuth] = useState(true)
@@ -75,6 +101,18 @@ export default function AdminDashboard() {
   // Ürün/kategori listesinde arama
   const [urunAramaQuery, setUrunAramaQuery] = useState('')
 
+  // Rezervasyon State'leri
+  const [editingRezervasyonKisaltma, setEditingRezervasyonKisaltma] = useState<string | null>(null)
+  const [rezTarih, setRezTarih] = useState('')
+  const [rezSaat, setRezSaat] = useState('')
+  const [rezIsim, setRezIsim] = useState('')
+  const [rezSoyisim, setRezSoyisim] = useState('')
+  const [rezTelefon, setRezTelefon] = useState('')
+  const [rezKacKisi, setRezKacKisi] = useState('')
+  const [rezDurum, setRezDurum] = useState(false)
+  const [rezSubmitting, setRezSubmitting] = useState(false)
+  const [rezAramaQuery, setRezAramaQuery] = useState('')
+
   const [submitting, setSubmitting] = useState(false)
   const router = useRouter()
 
@@ -90,6 +128,7 @@ export default function AdminDashboard() {
       fetchSliders()
       fetchKategoriler()
       fetchUrunler()
+      fetchRezervasyonlar()
     }
     checkAuthAndFetch()
   }, [router])
@@ -103,6 +142,11 @@ export default function AdminDashboard() {
   async function fetchKategoriler() {
     const { data } = await supabase.from('kategoriler').select('*').order('sira_numarasi', { ascending: true })
     if (data) setKategoriler(data)
+  }
+
+  async function fetchRezervasyonlar() {
+    const { data } = await supabase.from('rezervasyon').select('*').order('masa_kisaltmasi', { ascending: true })
+    if (data) setRezervasyonlar(data)
   }
 
   async function fetchUrunler() {
@@ -399,10 +443,95 @@ export default function AdminDashboard() {
     fetchUrunler()
   }
 
+  // WhatsApp'tan gelen rezervasyon talebini işlerken masayı hızlıca dolu/boş yap
+  // (detayları düzenlemeye gerek kalmadan). Masa boşaltılırken rezervasyon detayları da temizlenir.
+  const handleHizliDurumDegistir = async (rez: RezervasyonItem) => {
+    const yeniDurum = !rez.durum
+    setRezervasyonlar((prev) =>
+      prev.map((r) => (r.masa_kisaltmasi === rez.masa_kisaltmasi ? { ...r, durum: yeniDurum } : r))
+    )
+
+    const guncelleme = yeniDurum
+      ? { durum: true }
+      : {
+          durum: false,
+          rezervasyon_tarihi: null,
+          rezervasyon_saati: null,
+          rezervasyon_tarihi_gunu: null,
+          isim: null,
+          soyisim: null,
+          telefon_numarasi: null,
+          kac_kisi: null,
+        }
+
+    const { error } = await supabase.from('rezervasyon').update(guncelleme).eq('masa_kisaltmasi', rez.masa_kisaltmasi)
+    if (error) {
+      alert('Masa durumu güncellenemedi: ' + error.message)
+      setRezervasyonlar((prev) =>
+        prev.map((r) => (r.masa_kisaltmasi === rez.masa_kisaltmasi ? { ...r, durum: rez.durum } : r))
+      )
+      return
+    }
+    fetchRezervasyonlar()
+  }
+
+  const handleEditRezervasyon = (rez: RezervasyonItem) => {
+    setEditingRezervasyonKisaltma(rez.masa_kisaltmasi)
+    setRezTarih(rez.rezervasyon_tarihi ?? '')
+    setRezSaat(rez.rezervasyon_saati ?? '')
+    setRezIsim(rez.isim ?? '')
+    setRezSoyisim(rez.soyisim ?? '')
+    setRezTelefon(rez.telefon_numarasi ?? '')
+    setRezKacKisi(rez.kac_kisi != null ? String(rez.kac_kisi) : '')
+    setRezDurum(rez.durum)
+  }
+
+  const handleCancelRezervasyonEdit = () => {
+    setEditingRezervasyonKisaltma(null)
+  }
+
+  const handleRezervasyonSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingRezervasyonKisaltma) return
+    setRezSubmitting(true)
+
+    const { error } = await supabase
+      .from('rezervasyon')
+      .update({
+        durum: rezDurum,
+        rezervasyon_tarihi: rezTarih || null,
+        rezervasyon_saati: rezSaat || null,
+        rezervasyon_tarihi_gunu: rezTarih ? rezGunHesapla(rezTarih) : null,
+        isim: rezIsim.trim() || null,
+        soyisim: rezSoyisim.trim() || null,
+        telefon_numarasi: rezTelefon.trim() || null,
+        kac_kisi: rezKacKisi ? Number(rezKacKisi) : null,
+      })
+      .eq('masa_kisaltmasi', editingRezervasyonKisaltma)
+
+    setRezSubmitting(false)
+    if (error) {
+      alert('Rezervasyon bilgisi kaydedilemedi: ' + error.message)
+      return
+    }
+    setEditingRezervasyonKisaltma(null)
+    fetchRezervasyonlar()
+  }
+
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/admin/login')
   }
+
+  // Masa kısaltması, masa adı, isim/soyisim veya telefona göre arama (Türkçe karakter duyarlı)
+  const normalizedRezArama = rezAramaQuery.trim().toLocaleLowerCase('tr-TR')
+  const gosterilecekRezervasyonlar = normalizedRezArama
+    ? rezervasyonlar.filter((r) =>
+        [r.masa_kisaltmasi, r.masa_adi, r.isim, r.soyisim, r.telefon_numarasi]
+          .filter(Boolean)
+          .some((deger) => (deger as string).toLocaleLowerCase('tr-TR').includes(normalizedRezArama))
+      )
+    : rezervasyonlar
 
   // Ürün ismi veya kategori ismine göre arama (Türkçe karakter duyarlı)
   const normalizedUrunArama = urunAramaQuery.trim().toLocaleLowerCase('tr-TR')
@@ -466,11 +595,17 @@ export default function AdminDashboard() {
           >
             KATEGORİ YÖNETİMİ
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('urun')}
             className={`px-5 py-2.5 rounded-xl text-xs font-bold tracking-wider transition-all ${activeTab === 'urun' ? 'bg-amber-700 text-white shadow border border-amber-600/40' : 'text-stone-300 hover:text-white hover:bg-[#2c1810]'}`}
           >
             ÜRÜN YÖNETİMİ
+          </button>
+          <button
+            onClick={() => setActiveTab('rezervasyon')}
+            className={`px-5 py-2.5 rounded-xl text-xs font-bold tracking-wider transition-all ${activeTab === 'rezervasyon' ? 'bg-amber-700 text-white shadow border border-amber-600/40' : 'text-stone-300 hover:text-white hover:bg-[#2c1810]'}`}
+          >
+            REZERVASYON YÖNETİMİ
           </button>
         </div>
       </div>
@@ -1004,6 +1139,233 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+          </div>
+        )}
+
+        {activeTab === 'rezervasyon' && (
+          <div className="bg-[#3b2216] border border-amber-900/40 p-6 rounded-2xl shadow-xl">
+            <div className="flex items-center gap-2 mb-4 border-b border-amber-900/40 pb-3 text-amber-200 font-bold text-sm">
+              <CalendarCheck className="w-5 h-5 text-amber-500" />
+              <span>MASA REZERVASYON DURUMU ({rezervasyonlar.length})</span>
+            </div>
+
+            <p className="text-xs text-stone-400 mb-4 leading-relaxed">
+              Rezervasyon talepleri WhatsApp&apos;a düşer. Mesajı okuyup masayı burada dolu işaretle ve
+              istersen isim, telefon, tarih/saat gibi detayları da gir — site anında bu bilgiye göre güncellenir.
+            </p>
+
+            <div className="relative mb-4">
+              <input
+                type="text"
+                value={rezAramaQuery}
+                onChange={(e) => setRezAramaQuery(e.target.value)}
+                placeholder="Masa, isim veya telefona göre ara..."
+                className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl pl-9 pr-4 py-2.5 text-sm text-stone-100 placeholder-stone-500 focus:outline-none focus:border-amber-600"
+              />
+              <Search className="absolute left-3 top-3 w-4 h-4 text-stone-500" />
+            </div>
+
+            <div className="space-y-3">
+              {rezervasyonlar.length === 0 ? (
+                <p className="text-xs text-stone-400 text-center py-8">
+                  Henüz masa bulunamadı. <code className="font-mono">rezervasyon</code> tablosunun Supabase&apos;te
+                  oluşturulduğundan emin ol.
+                </p>
+              ) : gosterilecekRezervasyonlar.length === 0 ? (
+                <p className="text-xs text-stone-400 text-center py-8">Aramanızla eşleşen masa bulunamadı.</p>
+              ) : (
+                gosterilecekRezervasyonlar.map((rez) => (
+                  <div
+                    key={rez.masa_kisaltmasi}
+                    className={`p-4 rounded-xl border shadow-inner ${
+                      rez.durum ? 'bg-red-950/20 border-red-700/40' : 'bg-[#2c1810] border-amber-900/40'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] font-mono bg-amber-800/40 text-amber-300 px-2 py-0.5 rounded-full font-semibold">
+                            {rez.masa_kisaltmasi}
+                          </span>
+                          <span
+                            className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                              rez.durum ? 'bg-red-700 text-white' : 'bg-emerald-700 text-white'
+                            }`}
+                          >
+                            {rez.durum ? 'DOLU' : 'BOŞ'}
+                          </span>
+                          {rez.masanin_rezerve_olasiligi?.length ? (
+                            <span className="text-[10px] text-stone-400">
+                              {Math.min(...rez.masanin_rezerve_olasiligi)}-{Math.max(...rez.masanin_rezerve_olasiligi)} kişilik
+                            </span>
+                          ) : null}
+                        </div>
+                        <h4 className="font-bold text-amber-100 text-sm mt-1 break-words">{rez.masa_adi}</h4>
+                        {rez.durum && (rez.isim || rez.telefon_numarasi || rez.rezervasyon_tarihi) && (
+                          <div className="text-xs text-stone-400 mt-1 space-y-0.5">
+                            {(rez.isim || rez.soyisim) && (
+                              <p>
+                                {[rez.isim, rez.soyisim].filter(Boolean).join(' ')}
+                                {rez.kac_kisi ? ` · ${rez.kac_kisi} kişi` : ''}
+                              </p>
+                            )}
+                            {rez.telefon_numarasi && (
+                              <p className="flex items-center gap-1.5">
+                                <Phone className="w-3 h-3 text-amber-500" /> {rez.telefon_numarasi}
+                              </p>
+                            )}
+                            {rez.rezervasyon_tarihi && (
+                              <p>
+                                {new Date(rez.rezervasyon_tarihi + 'T00:00:00').toLocaleDateString('tr-TR')}
+                                {rez.rezervasyon_tarihi_gunu ? ` (${rez.rezervasyon_tarihi_gunu})` : ''}
+                                {rez.rezervasyon_saati ? ` · ${rez.rezervasyon_saati}` : ''}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => handleHizliDurumDegistir(rez)}
+                          className={`px-3 py-2 rounded-lg text-[11px] font-bold transition-colors border ${
+                            rez.durum
+                              ? 'bg-emerald-700 hover:bg-emerald-600 text-white border-emerald-500/50'
+                              : 'bg-red-900/60 hover:bg-red-800 text-red-200 border-red-700/50'
+                          }`}
+                          title={rez.durum ? 'Masayı boşalt' : 'Masayı dolu işaretle'}
+                        >
+                          {rez.durum ? 'BOŞALT' : 'DOLU İŞARETLE'}
+                        </button>
+                        <button
+                          onClick={() =>
+                            editingRezervasyonKisaltma === rez.masa_kisaltmasi
+                              ? handleCancelRezervasyonEdit()
+                              : handleEditRezervasyon(rez)
+                          }
+                          className="p-2 bg-amber-700/40 hover:bg-amber-700 text-amber-200 rounded-lg transition-colors border border-amber-600/30"
+                          title="Detayları düzenle"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {editingRezervasyonKisaltma === rez.masa_kisaltmasi && (
+                      <form onSubmit={handleRezervasyonSubmit} className="mt-4 pt-4 border-t border-amber-900/40 space-y-3">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-300 mb-1">
+                              Tarih
+                            </label>
+                            <input
+                              type="date"
+                              value={rezTarih}
+                              onChange={(e) => setRezTarih(e.target.value)}
+                              className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none focus:border-amber-600"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-300 mb-1">
+                              Saat
+                            </label>
+                            <input
+                              type="time"
+                              value={rezSaat}
+                              onChange={(e) => setRezSaat(e.target.value)}
+                              className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none focus:border-amber-600"
+                            />
+                          </div>
+                        </div>
+                        {rezTarih && (
+                          <p className="text-[11px] font-semibold text-amber-400">
+                            {rezGunHesapla(rezTarih)} günü olarak kaydedilecek
+                          </p>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-300 mb-1">
+                              Ad
+                            </label>
+                            <input
+                              type="text"
+                              value={rezIsim}
+                              onChange={(e) => setRezIsim(e.target.value)}
+                              className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none focus:border-amber-600"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-300 mb-1">
+                              Soyad
+                            </label>
+                            <input
+                              type="text"
+                              value={rezSoyisim}
+                              onChange={(e) => setRezSoyisim(e.target.value)}
+                              className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none focus:border-amber-600"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-300 mb-1">
+                            Telefon
+                          </label>
+                          <input
+                            type="tel"
+                            value={rezTelefon}
+                            onChange={(e) => setRezTelefon(e.target.value)}
+                            placeholder="05xx xxx xx xx"
+                            className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl px-3 py-2 text-sm text-stone-100 placeholder-stone-500 focus:outline-none focus:border-amber-600"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-300 mb-1">
+                            Kişi Sayısı
+                          </label>
+                          <input
+                            type="number"
+                            min={1}
+                            value={rezKacKisi}
+                            onChange={(e) => setRezKacKisi(e.target.value)}
+                            className="w-full bg-[#1e100a] border border-amber-900/50 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none focus:border-amber-600"
+                          />
+                        </div>
+
+                        <label className="flex items-center gap-2 text-xs font-semibold text-stone-300 cursor-pointer bg-[#1e100a] border border-amber-900/50 rounded-xl px-4 py-2.5">
+                          <input
+                            type="checkbox"
+                            checked={rezDurum}
+                            onChange={(e) => setRezDurum(e.target.checked)}
+                            className="w-4 h-4 accent-amber-600 rounded bg-[#1e100a] border-amber-900"
+                          />
+                          MASA DOLU (rezervasyon aktif)
+                        </label>
+
+                        <div className="flex gap-2 pt-1">
+                          <button
+                            type="submit"
+                            disabled={rezSubmitting}
+                            className="flex-1 bg-amber-700 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl text-xs tracking-wider transition-all shadow-lg disabled:opacity-55"
+                          >
+                            {rezSubmitting ? 'KAYDEDİLİYOR...' : 'KAYDET'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCancelRezervasyonEdit}
+                            className="bg-stone-700 hover:bg-stone-600 text-stone-200 px-4 py-2.5 rounded-xl text-xs font-bold"
+                          >
+                            İPTAL
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         )}
       </main>
