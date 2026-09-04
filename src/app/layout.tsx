@@ -53,6 +53,35 @@ export const metadata: Metadata = {
   // tek başına yeterli ve zaten alan adının tamamını (www dahil) kapsıyor.
 };
 
+// Google'a "bu logo bu işletmeye ait" bilgisini sitemap değil, bu yapısal
+// veri (JSON-LD) anlatır — marka aramasında/bilgi panelinde logonun doğru
+// gösterilmesi buna bağlı. sameAs listesi ortam değişkenlerinden geliyor,
+// dolayısıyla .env.local'daki Instagram/Facebook adresleriyle otomatik
+// senkron kalır.
+function isletmeYapisalVerisi() {
+  const sosyalHesaplar = [process.env.NEXT_PUBLIC_INSTAGRAM_URL, process.env.NEXT_PUBLIC_FACEBOOK_URL].filter(
+    Boolean
+  );
+  return {
+    "@context": "https://schema.org",
+    "@type": "Restaurant",
+    name: "Taşeli Sosyal Tesisleri",
+    url: SITE_URL,
+    logo: `${SITE_URL}/logo.png`,
+    image: `${SITE_URL}/logo.png`,
+    telephone: "+905392247570",
+    servesCuisine: "Türk Mutfağı",
+    priceRange: "₺₺",
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Sarıveliler",
+      addressRegion: "Karaman",
+      addressCountry: "TR",
+    },
+    ...(sosyalHesaplar.length ? { sameAs: sosyalHesaplar } : {}),
+  };
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -63,7 +92,14 @@ export default function RootLayout({
       lang="tr"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col overflow-x-hidden">{children}</body>
+      <body className="min-h-full flex flex-col overflow-x-hidden">
+        <script
+          type="application/ld+json"
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(isletmeYapisalVerisi()) }}
+        />
+        {children}
+      </body>
     </html>
   );
 }
